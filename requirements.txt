@@ -1,0 +1,2 @@
+deeppavlov
+git+https://github.com/IINemo/isanlp.git
