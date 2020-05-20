@@ -1,11 +1,12 @@
 import collections
+import glob
 import os
 import pickle
 import re
 
-import brave
 import conllu
 from easydict import EasyDict as edict
+from razdel.substring import Substring
 
 
 def wrap_edict(obj):
@@ -15,6 +16,25 @@ def wrap_edict(obj):
         return edict(obj)
     else:
         return obj
+
+
+SPLITTER_RE = re.compile(r'^\s*(oo\s+)?---+$', flags=re.MULTILINE)
+MULTI_LINE_BREAK_RE = re.compile('\n\n+')
+
+
+def clean_text(t):
+    return MULTI_LINE_BREAK_RE.sub('\n', SPLITTER_RE.sub('', t))
+
+
+def split_long_sentence(s, max_len=512, overlap=0.1):
+    if len(s.text) <= max_len:
+        return [s]
+    else:
+        print(f'Long sententce ({len(s.text)} > {max_len})! "{s}"')
+        return [Substring(start=s.start + i,
+                          stop=s.start + min(i+max_len, len(s.text)),
+                          text=s.text[i:i+max_len])
+                for i in range(0, len(s.text), max(1, int(max_len * (1 - overlap))))]
 
 
 def get_unique_out_path(path, force=False):
@@ -39,6 +59,10 @@ def load_doc(fname):
     return doc
 
 
+def load_all_docs(dirname):
+    return [load_doc(fname) for fname in glob.glob(os.path.join(dirname, '*.pickle'))]
+
+
 def load_conll_joint(sent_info):
     pos = wrap_edict(conllu.parse(sent_info.pos)[0])
     synt = wrap_edict(conllu.parse(sent_info.syntax)[0])
@@ -49,82 +73,7 @@ def load_conll_joint(sent_info):
     return pos
 
 
-DETOKENIZE_RULES = (
-    (r' ([.,!?;:»%)\]\'])( ?)', r'\1\2'),
-    (r'( ?)([([«`~@]) ', r'\1\2')
-)
-DETOKENIZE_RULES = [(re.compile(rule), rep) for rule, rep in DETOKENIZE_RULES]
-
-
-def infer_spans(text, tokens, unk='[UNK]', unk_sep=' '):
-    token_spans = []
-    cur_pos = 0
-    for i, tok in enumerate(tokens):
-        if tok == unk:
-            if i < len(tokens) - 1:
-                next_not_unk = i + 1
-                while next_not_unk < len(tokens) and tokens[next_not_unk] == unk:
-                    next_not_unk += 1
-
-                if next_not_unk > i + 1:
-                    if next_not_unk == len(tokens):
-                        next_not_unk_start = len(text)
-                    else:
-                        next_not_unk_start = text.find(tokens[next_not_unk], cur_pos)
-
-                    next_start = text.find(unk_sep, cur_pos + 1, next_not_unk_start)
-                    if next_start == -1:
-                        next_start = next_not_unk_start
-                else:
-                    next_start = text.find(tokens[next_not_unk], cur_pos)
-
-                assert next_start >= cur_pos, (text, tokens, i, tok)
-                tok = text[cur_pos:next_start].strip()
-            else:
-                tok = text[cur_pos:].strip()
-
-        new_pos = text.find(tok, cur_pos)
-        assert new_pos >= cur_pos, (text, tokens, tok, cur_pos, new_pos)
-        token_spans.append((new_pos, new_pos + len(tok)))
-        cur_pos = new_pos + len(tok)
-    assert len(tokens) == len(token_spans)
-    return token_spans
-
-
-def detokenize_sentence(tokens):
-    result = ' '.join(tokens)
-    while True:
-        new_result = result
-        for regex, rep in DETOKENIZE_RULES:
-            new_result = regex.sub(rep, new_result)
-        if new_result == result:
-            break
-        result = new_result
-    return result, infer_spans(result, tokens)
-
-
-def joint_markup_to_brat(tokens, syntax=True):
-    text, token_spans = detokenize_sentence([t.form for t in tokens])
-    entities = []
-    attributes = []
-    for tok in tokens:
-        entities.append((f'token_{tok.id}',
-                         tok.upostag,
-                         [token_spans[tok.id - 1]]))
-    relations = []
-    if syntax:
-        for tok in tokens:
-            if tok.head is not None and tok.head > 0:
-                relations.append((f'dep_{len(relations)}',
-                                  f'synt-{tok.deprel}',
-                                  (('child', f'token_{tok.id}'),
-                                   ('head', f'token_{tok.head}'))))
-    return dict(text=text,
-                entities=entities,
-                relations=relations,
-                attributes=attributes)
-
-
-def brave_visualize_sent(sent, **kwargs):
-    return brave.brave(joint_markup_to_brat(sent.joint, **kwargs),
-                       dict())
+def calc_corpus_stat(docs):
+    return dict(total_docs=len(docs),
+                total_sentences=sum(len(doc) for doc in docs),
+                total_tokens=sum(len(sent.joint) for doc in docs for sent in doc))

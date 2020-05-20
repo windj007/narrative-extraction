@@ -2,11 +2,12 @@
 import glob
 import os
 import pickle
+import traceback
 
 from deeppavlov import build_model, configs
 from razdel import sentenize
 
-from narratex.base import get_unique_out_path
+from narratex.base import split_long_sentence, clean_text
 
 
 def main(args):
@@ -17,26 +18,37 @@ def main(args):
     syntax_model = build_model(configs.syntax.syntax_ru_syntagrus_bert, download=True)
 
     for in_path in glob.glob(args.inglob, recursive=True):
-        print(in_path)
+        try:
+            print(in_path)
 
-        docname = os.path.splitext(os.path.basename(in_path))[0]
-        out_path = get_unique_out_path(os.path.join(args.outdir, docname + '.pickle'), force=args.f)
+            docname = os.path.splitext(os.path.basename(in_path))[0]
+            out_path = os.path.join(args.outdir, docname + '.pickle')
 
-        with open(in_path, 'r') as f:
-            full_text = f.read()
+            if os.path.exists(out_path) and not args.f:
+                print('Already processed')
+                continue
 
-        sentences_spans = list(sentenize(full_text))[:2]
-        sentences_pos = pos_model.batched_call([s.text for s in sentences_spans], batch_size=1)
-        sentences_syntax = syntax_model.batched_call([s.text for s in sentences_spans], batch_size=1)
-        assert len(sentences_spans) == len(sentences_pos) == len(sentences_syntax)
+            with open(in_path, 'r') as f:
+                full_text = clean_text(f.read())
 
-        doc_sentences = [dict(span=(span.start, span.stop),
-                              text=span.text,
-                              pos=pos,
-                              syntax=synt)
-                         for span, pos, synt in zip(sentences_spans, sentences_pos, sentences_syntax)]
-        with open(out_path, 'wb') as f:
-            pickle.dump(doc_sentences, f)
+            sentences_spans = list(sentenize(full_text))
+            sentences_spans = [split_sent
+                               for sent in sentences_spans
+                               for split_sent in split_long_sentence(sent, max_len=args.max_sent_len)]
+            sentences_texts = [s.text for s in sentences_spans]
+            sentences_pos = pos_model.batched_call(sentences_texts, batch_size=1)
+            sentences_syntax = syntax_model.batched_call(sentences_texts, batch_size=1)
+            assert len(sentences_spans) == len(sentences_pos) == len(sentences_syntax)
+
+            doc_sentences = [dict(span=(span.start, span.stop),
+                                  text=span.text,
+                                  pos=pos,
+                                  syntax=synt)
+                             for span, pos, synt in zip(sentences_spans, sentences_pos, sentences_syntax)]
+            with open(out_path, 'wb') as f:
+                pickle.dump(doc_sentences, f)
+        except Exception as ex:
+            print(f'Failed to process {in_path} due to {ex}\n{traceback.format_exc()}')
 
 
 if __name__ == '__main__':
@@ -46,5 +58,6 @@ if __name__ == '__main__':
     aparser.add_argument('inglob', type=str)
     aparser.add_argument('outdir', type=str)
     aparser.add_argument('-f', action='store_true')
+    aparser.add_argument('--max-sent-len', type=int, default=512, help='Maximum length of sentence')
 
     main(aparser.parse_args())
