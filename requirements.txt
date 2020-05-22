@@ -3,3 +3,5 @@ git+https://github.com/IINemo/isanlp.git
 conllu
 git+https://github.com/chorusai/brave.git
 easydict
+toposort
+networkx

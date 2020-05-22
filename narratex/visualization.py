@@ -1,8 +1,10 @@
 import re
 
 import brave
+import networkx as nx
 
 from IPython.display import display as jupyter_display
+import matplotlib.pyplot as plt
 
 
 DETOKENIZE_RULES = (
@@ -149,3 +151,34 @@ class SentenceVis:
             if self.display:
                 jupyter_display(widget)
         return result
+
+
+def plot_event_graph(group_similarity, group2name, min_sim=0, figsize=(20, 20),
+                     node_size=70, font_size=10, weight_pow=1, weigth_factor=1, layout_kwargs=dict(),
+                     fname=None):
+    graph = nx.Graph()
+
+    for g1 in range(group_similarity.shape[0]):
+        name1 = group2name[g1]
+        for g2 in range(g1 + 1, group_similarity.shape[0]):
+            sim = group_similarity[g1, g2]
+            if sim < min_sim:
+                continue
+            name2 = group2name[g2]
+            graph.add_edge(name1, name2, weight=(sim ** weight_pow) * weigth_factor)
+
+    pos = nx.spring_layout(graph, **layout_kwargs)
+
+    fig, ax = plt.subplots()
+    fig.set_size_inches(figsize)
+
+    nx.draw_networkx_nodes(graph, pos, node_size=node_size, ax=ax)
+    nx.draw_networkx_edges(graph, pos, ax=ax)
+    nx.draw_networkx_labels(graph, pos, font_size=font_size, font_family='sans-serif', ax=ax)
+
+    fig.tight_layout()
+
+    if fname is not None:
+        fig.savefig(fname)
+
+    return fig
