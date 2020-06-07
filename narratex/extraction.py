@@ -20,7 +20,7 @@ def get_verbal_nouns():
 VERBAL_NOUN_RE = re.compile(r'(ание|ение)$', re.I)
 
 
-GOOD_DEPS = {'xcomp', 'csubj:pass', 'advmod'}
+GOOD_DEPS = {'xcomp', 'csubj:pass', 'advmod', 'nsubj', 'nsubj:pass'}
 OBJ_DEPS = {'obj'}
 
 

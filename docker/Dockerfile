@@ -11,6 +11,7 @@ RUN python -m deeppavlov install syntax_ru_syntagrus_bert
 RUN python -m deeppavlov install morpho_ru_syntagrus_pymorphy
 
 
+WORKDIR /workspace
 ENV PYTHONPATH=/workspace
 VOLUME /workspace
 VOLUME /data
