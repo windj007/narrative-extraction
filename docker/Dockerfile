@@ -10,6 +10,7 @@ RUN python -m deeppavlov install syntax_ru_syntagrus_bert
 RUN python -m deeppavlov install morpho_ru_syntagrus_pymorphy
 
 RUN pip install gensim
+RUN pip install razdel notebook scipy matplotlib seaborn toposort
 
 
 ENV PYTHONPATH=/workspace

@@ -5,3 +5,8 @@ git+https://github.com/chorusai/brave.git
 easydict
 toposort
 networkx
+razdel
+scipy
+matplotlib
+seaborn
+toposort
