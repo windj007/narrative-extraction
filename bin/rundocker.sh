@@ -13,6 +13,7 @@ docker run -ti \
     --ipc=host \
     -v "$SRCDIR":/workspace \
     -v "$DATADIR":/data \
+    -v "$DATADIR/deeppavlov_workdir":/root/.deeppavlov \
     -e TORCH_HOME=/data/pretrained_models \
     -e CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES \
     rsuvorov/narrative-extraction \
