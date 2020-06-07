@@ -33,7 +33,6 @@ def main(args):
 
     for in_doc_fname in tqdm.tqdm(glob.glob(os.path.join(args.indir, '*.pickle'))):
         doc = load_doc(in_doc_fname)
-        print(doc)
         mark_events_corpus((doc,), evex)
         pickle_obj(doc, os.path.join(out_corpus_dir, os.path.basename(in_doc_fname)))
         corpus.append(doc)
