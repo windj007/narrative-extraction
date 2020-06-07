@@ -77,3 +77,8 @@ def calc_corpus_stat(docs):
     return dict(total_docs=len(docs),
                 total_sentences=sum(len(doc) for doc in docs),
                 total_tokens=sum(len(sent.joint) for doc in docs for sent in doc))
+
+
+def pickle_obj(obj, fname):
+    with open(fname, 'wb') as f:
+        pickle.dump(obj, fname)

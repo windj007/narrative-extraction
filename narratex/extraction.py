@@ -20,8 +20,8 @@ def get_verbal_nouns():
 VERBAL_NOUN_RE = re.compile(r'(ание|ение)$', re.I)
 
 
-GOOD_DEPS = {'xcomp', 'csubj:pass', 'advmod', 'nsubj', 'nsubj:pass'}
-OBJ_DEPS = {'obj'}
+GOOD_DEPS = {'xcomp', 'csubj:pass', 'advmod'}
+OBJ_DEPS = {'obj', 'nsubj', 'nsubj:pass'}
 
 
 def get_tree_distance(sent, group, cur_token_id, target_postag='VERB'):
