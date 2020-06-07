@@ -31,7 +31,7 @@ def get_tree_distance(sent, group, cur_token_id, target_postag='VERB'):
         if cur_token_info.head not in group:
             return float('inf')
         head = sent[cur_token_info.head - 1]
-        if head.upostag == target_postag:
+        if head.upos == target_postag:
             return result
         cur_token_id = head.id
         result += 1
