@@ -6,7 +6,10 @@ RUN apt-get update && \
 
 RUN pip install deeppavlov git+https://github.com/IINemo/isanlp.git conllu git+https://github.com/chorusai/brave.git \
     easydict toposort networkx tensorflow-gpu==1.14.0
-RUN python -m deeppavlov install syntax_ru_syntagrus_bert morpho_ru_syntagrus_pymorphy
+RUN python -m deeppavlov install syntax_ru_syntagrus_bert
+RUN python -m deeppavlov install morpho_ru_syntagrus_pymorphy
+
+RUN pip install gensim
 
 
 ENV PYTHONPATH=/workspace
