@@ -1,5 +1,5 @@
-FROM pytorch/pytorch:1.5-cuda10.1-cudnn7-runtime
-
+#FROM pytorch/pytorch:1.5-cuda10.1-cudnn7-runtime
+FROM deeppavlov/base-gpu:latest
 
 RUN apt-get update && \
 	apt-get install -qqy git libglib2.0-0 libsm6 libxext6 libxrender-dev build-essential
