@@ -39,7 +39,6 @@ def get_tree_distance(sent, group, cur_token_id, target_postag='VERB'):
 
 def find_predicates_simple(sent, verb_deps=GOOD_DEPS, obj_max_depth=-1, obj_deps=OBJ_DEPS, verbal_nouns_mode=None):
     result = []
-    print(sent)
     for tok in sent:
         if tok.upos == 'VERB':
             appended_to_existing = False
