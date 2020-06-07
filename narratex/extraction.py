@@ -41,7 +41,7 @@ def find_predicates_simple(sent, verb_deps=GOOD_DEPS, obj_max_depth=-1, obj_deps
     result = []
     print(sent)
     for tok in sent:
-        if tok.upostag == 'VERB':
+        if tok.upos == 'VERB':
             appended_to_existing = False
             if tok.head > 0 and verb_deps and tok.deprel in verb_deps:
                 for group in result:
@@ -61,7 +61,7 @@ def find_predicates_simple(sent, verb_deps=GOOD_DEPS, obj_max_depth=-1, obj_deps
                             group.append(tok.id)
                             break
 
-        elif tok.upostag == 'NOUN':
+        elif tok.upos == 'NOUN':
             if verbal_nouns_mode is not None:
                 if ((verbal_nouns_mode == 'vocab' and tok.lemma in get_verbal_nouns())
                         or (verbal_nouns_mode == 'regex' and VERBAL_NOUN_RE.search(tok.lemma))):
