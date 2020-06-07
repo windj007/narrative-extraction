@@ -36,8 +36,8 @@ def main(args):
                                for sent in sentences_spans
                                for split_sent in split_long_sentence(sent, max_len=args.max_sent_len)]
             sentences_texts = [s.text for s in sentences_spans]
-            sentences_pos = pos_model.batched_call(sentences_texts, batch_size=1)
-            sentences_syntax = syntax_model.batched_call(sentences_texts, batch_size=1)
+            sentences_pos = pos_model.batched_call(sentences_texts, batch_size=args.batch_size)
+            sentences_syntax = syntax_model.batched_call(sentences_texts, batch_size=args.batch_size)
             assert len(sentences_spans) == len(sentences_pos) == len(sentences_syntax)
 
             doc_sentences = [dict(span=(span.start, span.stop),
@@ -59,5 +59,6 @@ if __name__ == '__main__':
     aparser.add_argument('outdir', type=str)
     aparser.add_argument('-f', action='store_true')
     aparser.add_argument('--max-sent-len', type=int, default=512, help='Maximum length of sentence')
+    aparser.add_argument('--batch-size', type=int, default=1, help='Batch size for BERT')
 
     main(aparser.parse_args())
