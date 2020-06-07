@@ -6,7 +6,7 @@ import glob
 import os
 
 
-LIST_ITEM_RE = re.compile(r'^\s+oo\s+', re.M)
+LIST_ITEM_RE = re.compile(r'^\s+oo\s+(---+)?', re.M)
 
 
 def main(args):
@@ -15,7 +15,7 @@ def main(args):
     for in_fname in glob.glob(args.inglob):
         with open(in_fname, 'r') as f:
             text = f.read()
-        text = LIST_ITEM_RE.sub('.\n', text)
+        text = LIST_ITEM_RE.sub('.\n\n', text)
 
         with open(os.path.join(args.outdir, os.path.basename(in_fname)), 'w') as f:
             f.write(text)
