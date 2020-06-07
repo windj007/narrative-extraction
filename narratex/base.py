@@ -81,4 +81,4 @@ def calc_corpus_stat(docs):
 
 def pickle_obj(obj, fname):
     with open(fname, 'wb') as f:
-        pickle.dump(obj, fname)
+        pickle.dump(obj, f)
