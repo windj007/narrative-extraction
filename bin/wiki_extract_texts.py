@@ -4,7 +4,7 @@ import bz2
 import glob
 import os
 
-from gensim.corpora.wikicorpus import extract_pages
+from gensim.corpora.wikicorpus import extract_pages, filter_wiki
 
 
 def main(args):
@@ -18,7 +18,7 @@ def main(args):
                                                  filter_namespaces=filter_namespaces):
             if out_i % args.skip == 0:
                 with open(os.path.join(args.outdir, f'{pageid}.txt'), 'w') as f:
-                    f.write(text)
+                    f.write(filter_wiki(text))
             out_i += 1
 
 
