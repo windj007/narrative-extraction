@@ -13,6 +13,7 @@ from narratex.logger import setup_logger
 
 
 def main(args):
+    os.makedirs(args.outdir, exist_ok=True)
     logger = setup_logger(os.path.join(args.outdir, 'extract_raw_events.log'))
 
     logger.info('Collect events')
