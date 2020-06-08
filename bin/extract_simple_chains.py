@@ -1,47 +1,22 @@
 #!/usr/bin/env python3
 
 
-import glob
 import os
-from functools import partial
 
 import numpy as np
 import pandas as pd
-import tqdm
-from joblib import Parallel, delayed
 
-from narratex.base import load_doc, pickle_obj
+from narratex.base import pickle_obj, load_all_docs_lazy
 from narratex.clustering import build_simple_event_vocab, extract_collocations_count, calc_pmi, select_pairs_by_pmi
-from narratex.extraction import find_predicates_simple, simple_event_features, EventExtractor, mark_events_corpus, \
-    get_all_events
+from narratex.extraction import get_all_events
 from narratex.logger import setup_logger
 
 
-def mart_events_one(in_doc_fname, out_corpus_dir, evex):
-    doc = load_doc(in_doc_fname)
-    mark_events_corpus((doc,), evex)
-    pickle_obj(doc, os.path.join(out_corpus_dir, os.path.basename(in_doc_fname)))
-    return doc
-
-
 def main(args):
-    out_corpus_dir = os.path.join(args.outdir, 'docs_with_events')
-    os.makedirs(out_corpus_dir, exist_ok=True)
-
     logger = setup_logger(os.path.join(args.outdir, 'extract_raw_events.log'))
 
-    evex = EventExtractor(partial(find_predicates_simple,
-                                  obj_max_depth=2,
-                                  verbal_nouns_mode=None),
-                          simple_event_features)
-
-    logger.info('Mark events')
-    corpus = Parallel(n_jobs=args.jobs_n)(delayed(mart_events_one)(fname, out_corpus_dir, evex)
-                                          for fname in glob.glob(os.path.join(args.indir, '*.pickle')))
-    logger.info(f'Total docs {len(corpus)}')
-
     logger.info('Collect events')
-    all_events, event2ds = get_all_events(corpus)
+    all_events, _ = get_all_events(load_all_docs_lazy(args.indir))
     logger.info(f'Collected {len(all_events)} events')
 
     logger.info('Build vocab')
@@ -57,7 +32,8 @@ def main(args):
     group_freq.to_csv(os.path.join(args.outdir, 'all_event_groups.csv'), sep='\t')
 
     logger.info('Find collocations')
-    pair_proba, single_proba = extract_collocations_count(corpus, event2group,
+    pair_proba, single_proba = extract_collocations_count(load_all_docs_lazy(args.indir),
+                                                          event2group,
                                                           max_sent_distance=args.max_sent_dist)
     np.save(os.path.join(args.outdir, 'pair_proba.npy'), pair_proba)
     np.save(os.path.join(args.outdir, 'single_proba.npy'), single_proba)

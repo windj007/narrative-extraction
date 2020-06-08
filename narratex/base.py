@@ -63,6 +63,10 @@ def load_all_docs(dirname):
     return [load_doc(fname) for fname in glob.glob(os.path.join(dirname, '*.pickle'))]
 
 
+def load_all_docs_lazy(dirname):
+    return (load_doc(fname) for fname in glob.glob(os.path.join(dirname, '*.pickle')))
+
+
 def load_conll_joint(sent_info):
     pos = wrap_edict(conllu.parse(sent_info.pos)[0])
     synt = wrap_edict(conllu.parse(sent_info.syntax)[0])
