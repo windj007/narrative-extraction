@@ -20,14 +20,17 @@ def main(args):
     else:
         df = pd.read_csv(args.inpath, sep='\t', header=None)
 
-    import pdb; pdb.set_trace()
     str_columns = [c for c in df.columns if df[c].dtype.name == 'object']
+    print('str_columns', str_columns)
     df_str_cols = df[str_columns]
+    print('df_str_cols', df_str_cols.shape)
     save_filter = [not any(pattern.search(val)
                            for val in df_str_cols.loc[i].values
                            for pattern in blacklist_patterns)
                    for i in df_str_cols.index]
+    print('save_filter', pd.Series(save_filter).mean())
     df = df.loc[save_filter]
+    print(df.head)
 
     if args.is_frame:
         df.to_csv(args.outpath, sep='\t')
