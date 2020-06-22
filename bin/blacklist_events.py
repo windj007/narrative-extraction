@@ -16,9 +16,9 @@ def main(args):
         blacklist_patterns = [re.compile(line.strip(), re.I) for line in f if line.strip()]
 
     if args.is_frame:
-        df = pd.read_csv(args.inpath, sep='\t', index_col=[0])
+        df = pd.read_csv(args.inpath, sep='\t', index_col=[0], header=1)
     else:
-        df = pd.read_csv(args.inpath, sep='\t')
+        df = pd.read_csv(args.inpath, sep='\t', header=0)
 
     import pdb; pdb.set_trace()
     str_columns = [c for c in df.columns if df[c].dtype == 'str']
