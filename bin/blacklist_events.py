@@ -10,7 +10,7 @@ BLACKLIST_FILE = os.path.join(os.path.dirname(__file__), '..', 'narratex', 'data
 
 
 def main(args):
-    os.makedirs(args.outpath, exist_ok=True)
+    os.makedirs(os.path.dirname(args.outpath), exist_ok=True)
 
     with open(BLACKLIST_FILE, 'r') as f:
         blacklist_patterns = [re.compile(line.strip(), re.I) for line in f if line.strip()]
