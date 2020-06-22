@@ -51,7 +51,7 @@ def main(args):
 
     fore_single_count = pd.Series({fore_group2name[gr]: len(evs) for gr, evs in fore_group2event.items()})
     back2fore_single_count = pd.Series({fore_group2name[gr]: (len(back_group2event[back_name2group[fore_group2name[gr]]])
-                                                              if fore_group2name[gr] is not None
+                                                              if fore2back_group_map[gr] is not None
                                                               else 0)
                                         for gr in fore_group2event.keys()})
 
