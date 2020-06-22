@@ -29,9 +29,9 @@ def main(args):
     df = df.loc[save_filter]
 
     if args.is_frame:
-        df.save(args.outpath, sep='\t')
+        df.to_csv(args.outpath, sep='\t')
     else:
-        df.save(args.outpath, sep='\t', index=False)
+        df.to_csv(args.outpath, sep='\t', index=False)
 
 
 if __name__ == '__main__':
