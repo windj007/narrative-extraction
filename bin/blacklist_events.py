@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 
 
-import re
-import glob
 import os
-import pandas as pd
+import re
 
+import pandas as pd
 
 BLACKLIST_FILE = os.path.join(os.path.dirname(__file__), '..', 'narratex', 'data', 'events_blacklist.txt')
 
 
 def main(args):
-    os.makedirs(args.outdir, exist_ok=True)
+    os.makedirs(args.outpath, exist_ok=True)
 
     with open(BLACKLIST_FILE, 'r') as f:
         blacklist_patterns = [re.compile(line.strip(), re.I) for line in f if line.strip()]
@@ -40,7 +39,7 @@ if __name__ == '__main__':
 
     aparser = argparse.ArgumentParser()
     aparser.add_argument('inpath', type=str, help='Pattern to csv file to filter')
-    aparser.add_argument('oupath', type=str, help='Where to store results')
+    aparser.add_argument('outpath', type=str, help='Where to store results')
     aparser.add_argument('--is-frame', action='store_true',
                          help='Treat csv as dataframe (if absent, csv will be treated as series)')
 
