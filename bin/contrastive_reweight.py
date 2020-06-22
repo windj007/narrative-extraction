@@ -53,7 +53,7 @@ def main(args):
     back2fore_single_count = pd.Series({fore_group2name[gr]: (len(back_group2event[back_name2group[fore_group2name[gr]]])
                                                               if fore_group2name[gr] is not None
                                                               else 0)
-                                        for gr in fore_group2event.items()})
+                                        for gr in fore_group2event.keys()})
 
     # contrastive reweighting based only on single probability difference
     single_logtfidf = np.log(fore_single_proba + LOG_EPS) - np.log(back2fore_mapped_single_proba + LOG_EPS)
