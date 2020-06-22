@@ -20,6 +20,7 @@ def main(args):
     else:
         df = pd.read_csv(args.inpath, sep='\t')
 
+    import pdb; pdb.set_trace()
     str_columns = [c for c in df.columns if df[c].dtype == 'str']
     df_str_cols = df[str_columns]
     save_filter = [not any(pattern.search(val)
