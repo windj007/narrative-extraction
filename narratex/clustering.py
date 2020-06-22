@@ -58,11 +58,11 @@ def calc_pmi(pair_proba, single_proba):
     return np.log(pair_proba / norm)
 
 
-def select_pairs_by_pmi(pmi, name_map=None, min_pmi=0):
-    first_index, second_index = np.where(pmi > min_pmi)
+def select_pairs_by_weights(pairwise_weights, name_map=None, min_weight=0):
+    first_index, second_index = np.where(pairwise_weights > min_weight)
     pairs = list({tuple(sorted((a, b))) for a, b in zip(first_index, second_index) if a != b})
     first_index, second_index = zip(*pairs)
-    weights = pmi[first_index, second_index].reshape(-1)
+    weights = pairwise_weights[first_index, second_index].reshape(-1)
     if name_map is not None:
         first_index = [name_map[i] for i in first_index]
         second_index = [name_map[i] for i in second_index]

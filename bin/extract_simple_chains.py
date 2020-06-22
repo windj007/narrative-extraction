@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from narratex.base import pickle_obj, load_all_docs_lazy
-from narratex.clustering import build_simple_event_vocab, extract_collocations_count, calc_pmi, select_pairs_by_pmi
+from narratex.clustering import build_simple_event_vocab, extract_collocations_count, calc_pmi, select_pairs_by_weights
 from narratex.extraction import get_all_events
 from narratex.logger import setup_logger
 
@@ -46,7 +46,7 @@ def main(args):
     logger.info('PMI done')
 
     logger.info('Print pairs to csv')
-    all_colloc = select_pairs_by_pmi(pmi, name_map=group2name)
+    all_colloc = select_pairs_by_weights(pmi, name_map=group2name)
     all_colloc['first_count'] = group_freq[all_colloc['first']].reset_index(drop=True)
     all_colloc['second_count'] = group_freq[all_colloc['second']].reset_index(drop=True)
     all_colloc.to_csv(os.path.join(args.outdir, 'all_colloc.csv'), sep='\t')
