@@ -21,7 +21,7 @@ def main(args):
         df = pd.read_csv(args.inpath, sep='\t', header=None)
 
     import pdb; pdb.set_trace()
-    str_columns = [c for c in df.columns if df[c].dtype == 'str']
+    str_columns = [c for c in df.columns if df[c].dtype.name == 'object']
     df_str_cols = df[str_columns]
     save_filter = [not any(pattern.search(val)
                            for val in df_str_cols.loc[i].values
