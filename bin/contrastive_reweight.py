@@ -61,7 +61,7 @@ def main(args):
     group_freq_single_contr.sort_values(ascending=False, inplace=True)
     group_freq_single_contr.to_csv(os.path.join(args.outdir, 'all_event_groups_tfidf.csv'), sep='\t')
 
-    pmi_single_contr = np.log(fore_pair_proba + LOG_EPS) - single_logtfidf[None, ...] - single_logtfidf[..., None]
+    pmi_single_contr = np.log(fore_pair_proba + LOG_EPS) + single_logtfidf[None, ...] + single_logtfidf[..., None]
     np.save(os.path.join(args.outdir, 'pmi_single_contrast.npy'), pmi_single_contr)
 
     pmi_threshold1 = np.quantile(pmi_single_contr.reshape(-1), 0.8)
