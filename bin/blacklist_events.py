@@ -32,7 +32,7 @@ def main(args):
     if args.is_frame:
         df.to_csv(args.outpath, sep='\t')
     else:
-        df.to_csv(args.outpath, sep='\t', index=False)
+        df.to_csv(args.outpath, sep='\t', index=False, header=False)
 
 
 if __name__ == '__main__':
