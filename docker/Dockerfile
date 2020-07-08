@@ -9,7 +9,7 @@ RUN pip install deeppavlov git+https://github.com/IINemo/isanlp.git conllu git+h
     easydict toposort networkx gensim razdel notebook scipy matplotlib seaborn toposort
 RUN python -m deeppavlov install syntax_ru_syntagrus_bert
 RUN python -m deeppavlov install morpho_ru_syntagrus_pymorphy
-
+RUN pip install pyyaml
 
 WORKDIR /workspace
 ENV PYTHONPATH=/workspace
