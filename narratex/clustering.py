@@ -66,6 +66,7 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
     event2group = {}
     group_n = 0
 
+    import pdb; pdb.set_trace()
     for event in all_events:
         cur_txt = event.features.text
 
