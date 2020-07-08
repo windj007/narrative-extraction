@@ -44,7 +44,7 @@ class EmbeddingMatchSimilarity:
         txt1_embs = self.get_embeddings(txt1_tokens)
         txt2_embs = self.get_embeddings(txt2_tokens)
 
-        if len(txt1_embs) == 0 or len(txt2_embs) == 0:
+        if txt1_embs is None or txt2_embs is None:
             return 0
 
         print('txt1_embs', txt1_embs.shape)
