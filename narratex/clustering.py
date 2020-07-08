@@ -47,9 +47,6 @@ class EmbeddingMatchSimilarity:
         if txt1_embs is None or txt2_embs is None:
             return 0
 
-        print('txt1_embs', txt1_embs.shape)
-        print('txt2_embs', txt2_embs.shape)
-
         sims = txt1_embs @ txt2_embs.T
 
         row_ind, col_ind = scipy.optimize.linear_sum_assignment(sims)
