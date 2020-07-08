@@ -70,7 +70,8 @@ class EmbeddingMatchSimilarity:
         return result
 
 
-def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_group=10, same_group_threshold=0.6):
+def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_group=10, same_group_threshold=0.6,
+                                   warning_group_threshold=0.4):
     emb = KeyedVectors.load_word2vec_format(model_path, binary=True)
     measure = EmbeddingMatchSimilarity(emb)
     text2group = {}
@@ -95,10 +96,13 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
                     best_match_txt = other_txt
 
             if best_group is not None and best_sim >= same_group_threshold:
-                LOGGER.info(f'Merge "{cur_txt}" and "{best_match_txt}"')
+                LOGGER.info(f'Merge "{cur_txt}" and "{best_match_txt}", similarity {best_sim:.2f}')
                 event2group[event.id] = best_group
                 text2group[cur_txt] = best_group
             else:
+                if best_group is not None and warning_group_threshold <= best_sim < same_group_threshold:
+                    LOGGER.info(f'Did not merge similar "{cur_txt}" and "{best_match_txt}", '
+                                f'but not enough, sim {best_sim:.2f}')
                 event2group[event.id] = group_n
                 text2group[cur_txt] = group_n
                 group_n += 1
