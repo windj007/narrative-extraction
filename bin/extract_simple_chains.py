@@ -6,13 +6,16 @@ import os
 import numpy as np
 import pandas as pd
 
-from narratex.base import pickle_obj, load_all_docs_lazy
-from narratex.clustering import build_simple_event_vocab, extract_collocations_count, calc_pmi, select_pairs_by_weights
+from narratex.base import pickle_obj, load_all_docs_lazy, load_yaml
+from narratex.clustering import build_simple_event_vocab, extract_collocations_count, calc_pmi, select_pairs_by_weights, \
+    build_event_vocab_group_by_w2v
 from narratex.extraction import get_all_events
 from narratex.logger import setup_logger
 
 
 def main(args):
+    config = load_yaml(args.config)
+
     os.makedirs(args.outdir, exist_ok=True)
     logger = setup_logger(os.path.join(args.outdir, 'extract_raw_events.log'))
 
@@ -21,8 +24,13 @@ def main(args):
     logger.info(f'Collected {len(all_events)} events')
 
     logger.info('Build vocab')
-    group2event, event2group = build_simple_event_vocab(all_events,
-                                                        min_mentions_per_group=args.min_mentions)
+    if config.vocab.kind == 'simple':
+        group2event, event2group = build_simple_event_vocab(all_events,
+                                                            **config.vocab.kwargs)
+    elif config.vocab.kind == 'group_by_word2vec':
+        group2event, event2group = build_event_vocab_group_by_w2v(all_events,
+                                                                  **config.vocab.kwargs)
+
     pickle_obj(group2event, os.path.join(args.outdir, 'group2event.pickle'))
     logger.info(f'Grouped events into {len(group2event)} groups')
 
@@ -35,7 +43,8 @@ def main(args):
     logger.info('Find collocations')
     pair_proba, single_proba = extract_collocations_count(load_all_docs_lazy(args.indir),
                                                           event2group,
-                                                          max_sent_distance=args.max_sent_dist)
+                                                          min_sent_distance=config.collocations.min_sent_dist,
+                                                          max_sent_distance=config.collocations.max_sent_dist)
     np.save(os.path.join(args.outdir, 'pair_proba.npy'), pair_proba)
     np.save(os.path.join(args.outdir, 'single_proba.npy'), single_proba)
     logger.info('Collocations done')
@@ -58,10 +67,6 @@ if __name__ == '__main__':
     aparser = argparse.ArgumentParser()
     aparser.add_argument('indir', type=str, help='Path to corpus')
     aparser.add_argument('outdir', type=str, help='Where to store results')
-    aparser.add_argument('--min-mentions', type=int, default=50, help='Minimum mentions number for event to persist')
-    aparser.add_argument('--max-sent-dist', type=int, default=3,
-                         help='Maximum number of sentences between actions to count co-occurrence')
-    aparser.add_argument('--jobs-n', type=int, default=-1,
-                         help='Number of processes')
+    aparser.add_argument('config', type=str, help='Config')
 
     main(aparser.parse_args())

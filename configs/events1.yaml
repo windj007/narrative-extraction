@@ -1,0 +1,8 @@
+vocab:
+  kind: simple
+  kwargs:
+    min_mentions_per_group: 5
+
+collocations:
+  min_sent_dist: 0
+  max_sent_dist: 1

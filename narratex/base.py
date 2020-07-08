@@ -5,6 +5,7 @@ import pickle
 import re
 
 import conllu
+import yaml
 from easydict import EasyDict as edict
 from razdel.substring import Substring
 
@@ -91,3 +92,8 @@ def pickle_obj(obj, fname):
 def load_pickle(fname):
     with open(fname, 'rb') as f:
         return pickle.load(f)
+
+
+def load_yaml(fname):
+    with open(fname, 'r') as f:
+        return edict(yaml.safe_load(f))

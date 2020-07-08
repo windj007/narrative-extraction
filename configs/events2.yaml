@@ -1,0 +1,10 @@
+vocab:
+  kind: group_by_word2vec
+  kwargs:
+    model_path: /data/models/tayga_upos_skipgram_300_2_2019/model.bin
+    min_mentions_per_group: 10
+    same_group_threshold: 0.65
+
+collocations:
+  min_sent_dist: 0
+  max_sent_dist: 1
