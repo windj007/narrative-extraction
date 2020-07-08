@@ -33,12 +33,8 @@ class EmbeddingMatchSimilarity:
         self.tag_conv = converters.converter('opencorpora-int', 'ud20')
 
     def __call__(self, txt1, txt2):
-        print('txt1', txt1)
-        print('txt2', txt2)
         txt1_tokens = self.prepare_tokens(txt1)
         txt2_tokens = self.prepare_tokens(txt2)
-        print('txt1_tokens', txt1_tokens)
-        print('txt2_tokens', txt2_tokens)
 
         if len(txt1_tokens) == 0 or len(txt2_tokens) == 0:
             return 0
@@ -52,9 +48,7 @@ class EmbeddingMatchSimilarity:
         sims = txt1_embs @ txt2_embs.T
 
         row_ind, col_ind = scipy.optimize.linear_sum_assignment(sims)
-        print('row_ind, col_ind', row_ind, col_ind)
         best_sims = sims[row_ind, col_ind]
-        print('best_sims', best_sims, best_sims.mean())
         return best_sims.mean()
 
     def prepare_tokens(self, txt):
@@ -89,6 +83,7 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
         if cur_txt in text2group:
             event2group[event.id] = text2group[cur_txt]
         else:
+            best_match_txt = None
             best_group = None
             best_sim = 0
 
@@ -97,8 +92,10 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
                 if cur_sim >= best_sim or best_group is None:
                     best_sim = cur_sim
                     best_group = other_group_id
+                    best_match_txt = other_txt
 
             if best_group is not None and best_sim >= same_group_threshold:
+                LOGGER.info(f'Merge "{cur_txt}" and "{best_match_txt}"')
                 event2group[event.id] = best_group
                 text2group[cur_txt] = best_group
             else:
