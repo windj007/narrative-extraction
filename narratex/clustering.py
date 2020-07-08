@@ -106,7 +106,7 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
 
 
 def extract_collocations_count(docs, event2group, min_sent_distance=0, max_sent_distance=3):
-    assert min_sent_distance > 0
+    assert min_sent_distance >= 0
     assert min_sent_distance <= max_sent_distance
     n_groups = max(event2group.values()) + 1
     pair_counts = scipy.sparse.dok_matrix((n_groups, n_groups))
