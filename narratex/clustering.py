@@ -7,6 +7,8 @@ import scipy.optimize
 from russian_tagsets import converters
 from gensim.models import KeyedVectors
 
+from narratex.logger import LOGGER
+
 
 def build_simple_event_vocab(all_events, min_mentions_per_group=10):
     events_by_id = {ev.id: ev for ev in all_events}
@@ -60,6 +62,9 @@ class EmbeddingMatchSimilarity:
 
     def get_tag(self, tok):
         oc_tag = self.morph.parse(tok)[0].tag.POS
+        if oc_tag is None:
+            LOGGER.warning(f'Could not find POS-tag for token "{tok}": {oc_tag}')
+            return 'NOTAG'
         return self.tag_conv(oc_tag).split(' ')[0]
 
     def get_embeddings(self, tokens):
