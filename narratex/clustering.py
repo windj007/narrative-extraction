@@ -31,14 +31,21 @@ class EmbeddingMatchSimilarity:
         self.tag_conv = converters.converter('opencorpora-int', 'ud20')
 
     def __call__(self, txt1, txt2):
+        print('txt1', txt1)
+        print('txt2', txt2)
         txt1_tokens = self.prepare_tokens(txt1)
         txt2_tokens = self.prepare_tokens(txt2)
+        print('txt1_tokens', txt1_tokens)
+        print('txt2_tokens', txt2_tokens)
 
         if len(txt1_tokens) == 0 or len(txt2_tokens) == 0:
             return 0
 
         txt1_embs = self.get_embeddings(txt1_tokens)
         txt2_embs = self.get_embeddings(txt2_tokens)
+
+        print('txt1_embs', txt1_embs.shape)
+        print('txt2_embs', txt2_embs.shape)
 
         sims = txt1_embs @ txt2_embs.T
 
@@ -66,7 +73,6 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
     event2group = {}
     group_n = 0
 
-    import pdb; pdb.set_trace()
     for event in all_events:
         cur_txt = event.features.text
 
