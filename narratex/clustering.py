@@ -44,13 +44,18 @@ class EmbeddingMatchSimilarity:
         txt1_embs = self.get_embeddings(txt1_tokens)
         txt2_embs = self.get_embeddings(txt2_tokens)
 
+        if len(txt1_embs) == 0 or len(txt2_embs) == 0:
+            return 0
+
         print('txt1_embs', txt1_embs.shape)
         print('txt2_embs', txt2_embs.shape)
 
         sims = txt1_embs @ txt2_embs.T
 
         row_ind, col_ind = scipy.optimize.linear_sum_assignment(sims)
+        print('row_ind, col_ind', row_ind, col_ind)
         best_sims = sims[row_ind, col_ind]
+        print('best_sims', best_sims, best_sims.mean())
         return best_sims.mean()
 
     def prepare_tokens(self, txt):
@@ -61,7 +66,10 @@ class EmbeddingMatchSimilarity:
         return self.tag_conv(oc_tag).split(' ')[0]
 
     def get_embeddings(self, tokens):
-        result = np.stack([self.gensim_emb[tok] for tok in tokens if tok in self.gensim_emb.vocab], axis=0)
+        vectors = [self.gensim_emb[tok] for tok in tokens if tok in self.gensim_emb.vocab]
+        if len(vectors) == 0:
+            return None
+        result = np.stack(vectors, axis=0)
         result /= np.linalg.norm(result, axis=1, keepdims=True)
         return result
 
