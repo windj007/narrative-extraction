@@ -35,7 +35,6 @@ class EmbeddingMatchSimilarity:
         self.tag_cache = {}
 
         self.id2text = list(sorted(set(texts)))
-        print('self.id2text', len(self.id2text))
 
         textid2tokens = [[tok + '_' + self.get_tag(tok) for tok in txt.split(' ')]
                          for txt in self.id2text]
@@ -43,7 +42,6 @@ class EmbeddingMatchSimilarity:
                          if tok in self.gensim_emb.vocab]
         token2tokenid = {tok: i for i, tok in enumerate(tokenid2token)}
         self.tokenid2vec = [self.gensim_emb[tok] for tok in tokenid2token]
-        print('self.tokenid2vec', len(self.tokenid2vec))
 
         self.tokenid2textid = collections.defaultdict(set)
         self.text2tokenid = collections.defaultdict(set)
@@ -54,8 +52,6 @@ class EmbeddingMatchSimilarity:
                 if tok_id is not None:
                     self.tokenid2textid[tok_id].add(txt_i)
                     self.text2tokenid[txt].add(tok_id)
-        print('self.tokenid2textid', len(self.tokenid2textid))
-        print('self.text2tokenid', len(self.text2tokenid))
 
         self.vector_idx = annoy.AnnoyIndex(self.gensim_emb.vectors.shape[1], 'angular')
         for tok_i, tok_vec in enumerate(self.tokenid2vec):
@@ -63,9 +59,7 @@ class EmbeddingMatchSimilarity:
         self.vector_idx.build(trees_n)
 
     def find_most_similar(self, query_txt, candidates_n=10, max_cand_tok_dist=1):
-        print('query_txt', query_txt)
         query_token_ids = self.text2tokenid[query_txt]
-        print('query_token_ids', len(query_token_ids))
         if len(query_token_ids) == 0:
             return []
 
@@ -155,8 +149,6 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
             event2group[event.id] = text2group[cur_txt]
         else:
             sim_texts = sim_index.find_most_similar(cur_txt, max_cand_tok_dist=1 - warning_group_threshold)
-            LOGGER.info(f'cur_txt {cur_txt}')
-            LOGGER.info(f'found {sim_texts}')
 
             best_group = None
             best_sim = 0
@@ -166,10 +158,6 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
                 if best_group is not None:
                     best_match_txt = other_txt
                     break
-
-            print('best_group', best_group, best_match_txt)
-            print('best_sim', best_sim)
-            1 / 0
 
             if best_group is not None and best_sim >= same_group_threshold:
                 LOGGER.info(f'Merge "{cur_txt}" and "{best_match_txt}", similarity {best_sim:.2f}')
