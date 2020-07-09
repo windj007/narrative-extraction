@@ -73,6 +73,7 @@ class EmbeddingMatchSimilarity:
         for tokid in query_token_ids:
             candidate_text_ids.update(self.tokenid2textid[tokid])
             tok_sims = self.vector_idx.get_nns_by_item(tokid, candidates_n, include_distances=True)
+            print('tok_sims', tok_sims)
             if len(tok_sims[0]) > 0:
                 for other_tokid, tok_sim in zip(tok_sims):
                     if tok_sim >= min_cand_tok_sim:
