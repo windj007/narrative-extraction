@@ -81,8 +81,9 @@ class EmbeddingMatchSimilarity:
         oc_tag = self.morph.parse(tok)[0].tag.POS
         if oc_tag is None:
             LOGGER.warning(f'Could not find POS-tag for token "{tok}": {oc_tag}')
-            return 'NOTAG'
-        tag = self.tag_conv(oc_tag).split(' ')[0]
+            tag = 'NOTAG'
+        else:
+            tag = self.tag_conv(oc_tag).split(' ')[0]
         self.tag_cache[tok] = tag
         return tag
 
