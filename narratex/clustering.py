@@ -37,7 +37,7 @@ class EmbeddingMatchSimilarity:
         self.id2text = list(sorted(set(texts)))
         print('self.id2text', len(self.id2text))
 
-        textid2tokens = [[tok + '_' + self.get_tag(tok) for tok in txt]
+        textid2tokens = [[tok + '_' + self.get_tag(tok) for tok in txt.split(' ')]
                          for txt in self.id2text]
         tokenid2token = [tok for tok in sorted(set(tok for txt_toks in textid2tokens for tok in txt_toks))
                          if tok in self.gensim_emb.vocab]
