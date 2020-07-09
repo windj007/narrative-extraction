@@ -132,7 +132,7 @@ class EmbeddingMatchSimilarity:
 
 
 def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_group=10, same_group_threshold=0.6,
-                                   warning_group_threshold=0.4):
+                                   warning_group_threshold=0.4, show_progress_freq=100):
     emb = KeyedVectors.load_word2vec_format(model_path, binary=True)
     sim_index = EmbeddingMatchSimilarity(emb,
                                          (ev.features.text for ev in all_events))
@@ -142,7 +142,11 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
     group2event = {}
     group_n = 0
 
-    for event in all_events:
+    for ev_i, event in enumerate(all_events):
+        if ev_i % show_progress_freq == 0:
+            LOGGER.info(f'Handled {ev_i}/{len(all_events)} events, total groups {len(group2event)}, '
+                        f'unique texts {len(text2group)}')
+
         cur_txt = event.features.text
 
         if cur_txt in text2group:
@@ -160,7 +164,8 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
                     break
 
             if best_group is not None and best_sim >= same_group_threshold:
-                LOGGER.info(f'Merge "{cur_txt}" and "{best_match_txt}", similarity {best_sim:.2f}')
+                LOGGER.info(f'Merge "{cur_txt}" and "{best_match_txt}" into group {best_group}, '
+                            f'similarity {best_sim:.2f}')
                 event2group[event.id] = best_group
                 group2event[best_group].append(event)
                 text2group[cur_txt] = best_group
