@@ -72,7 +72,7 @@ class EmbeddingMatchSimilarity:
             LOGGER.warning(f'Could not find POS-tag for token "{tok}": {oc_tag}')
             return 'NOTAG'
         tag = self.tag_conv(oc_tag).split(' ')[0]
-        cached_tag[tok] = tag
+        self.tag_cache[tok] = tag
         return tag
 
     def get_embeddings(self, tokens):
