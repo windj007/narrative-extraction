@@ -62,7 +62,7 @@ class EmbeddingMatchSimilarity:
             self.vector_idx.add_item(tok_i, tok_vec)
         self.vector_idx.build(trees_n)
 
-    def find_most_similar(self, query_txt, candidates_n=10, min_cand_tok_sim=0.5):
+    def find_most_similar(self, query_txt, candidates_n=10, max_cand_tok_dist=1):
         print('query_txt', query_txt)
         query_token_ids = self.text2tokenid[query_txt]
         print('query_token_ids', len(query_token_ids))
@@ -72,11 +72,10 @@ class EmbeddingMatchSimilarity:
         candidate_text_ids = set()
         for tokid in query_token_ids:
             candidate_text_ids.update(self.tokenid2textid[tokid])
-            tok_sims = self.vector_idx.get_nns_by_item(tokid, candidates_n, include_distances=True)
-            print('tok_sims', tok_sims)
-            if len(tok_sims[0]) > 0:
-                for other_tokid, tok_sim in zip(tok_sims):
-                    if tok_sim >= min_cand_tok_sim:
+            sim_tok_ids, sim_tok_sims = self.vector_idx.get_nns_by_item(tokid, candidates_n, include_distances=True)
+            if len(sim_tok_ids) > 0:
+                for other_tokid, tok_sim in zip(sim_tok_ids, sim_tok_sims):
+                    if tok_sim <= max_cand_tok_dist:
                         candidate_text_ids.update(self.tokenid2textid[other_tokid])
 
         query_feats = self.stack_and_norm([self.tokenid2vec[tok_id] for tok_id in query_token_ids])
@@ -139,7 +138,7 @@ class EmbeddingMatchSimilarity:
 
 
 def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_group=10, same_group_threshold=0.6,
-                                   warning_group_threshold=0.4):
+                                   warning_group_threshold=0.4, max_cand_tok_dist=1):
     emb = KeyedVectors.load_word2vec_format(model_path, binary=True)
     sim_index = EmbeddingMatchSimilarity(emb,
                                          (ev.features.text for ev in all_events))
@@ -155,8 +154,7 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
         if cur_txt in text2group:
             event2group[event.id] = text2group[cur_txt]
         else:
-            sim_texts = sim_index.find_most_similar(cur_txt,
-                                                    min_cand_tok_sim=warning_group_threshold)
+            sim_texts = sim_index.find_most_similar(cur_txt, max_cand_tok_dist=max_cand_tok_dist)
             LOGGER.info(f'cur_txt {cur_txt}')
             LOGGER.info(f'found {sim_texts}')
             1 / 0
