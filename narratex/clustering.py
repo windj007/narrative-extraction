@@ -140,7 +140,8 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
     text2group = {}
     event2group = {}
     group2event = {}
-    group_n = 0
+
+    LOGGER.info(f'Unique event ids number {len(set(ev.id for ev in all_events))} vs events number {len(all_events)}')
 
     for ev_i, event in enumerate(all_events):
         if ev_i % show_progress_freq == 0:
@@ -164,20 +165,24 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
                     break
 
             if best_group is not None and best_sim >= same_group_threshold:
-                LOGGER.info(f'Merge "{cur_txt}" and "{best_match_txt}" into group {best_group}, '
-                            f'similarity {best_sim:.2f}')
                 event2group[event.id] = best_group
                 group2event[best_group].append(event)
                 text2group[cur_txt] = best_group
+                LOGGER.info(f'Merge "{cur_txt}" and "{best_match_txt}" into group {best_group} '
+                            f'({len(group2event[best_group])} events), similarity {best_sim:.2f}')
+
             else:
                 if best_group is not None and warning_group_threshold <= best_sim < same_group_threshold:
                     LOGGER.info(f'Did not merge similar "{cur_txt}" and "{best_match_txt}", '
                                 f'but not enough, sim {best_sim:.2f}')
-                event2group[event.id] = group_n
-                text2group[cur_txt] = group_n
-                group2event[group_n] = [event]
-                group_n += 1
+                cur_group_n = len(group2event)
+                event2group[event.id] = cur_group_n
+                text2group[cur_txt] = cur_group_n
+                group2event[cur_group_n] = [event]
+        assert event2group[event.id] is not None
 
+    LOGGER.info(f'Total number of events in {len(group2event)} groups after clustering'
+                f'is {sum(len(evs) for evs in group2event.values())}')
     # group2event = {grid: events for grid, events in group2event.items() if len(events) >= min_mentions_per_group}
     # group_remap = {grid: i for i, grid in enumerate(sorted(group2event.keys()))}
     # group2event = {group_remap[grid]: events for grid, events in group2event.items()}
