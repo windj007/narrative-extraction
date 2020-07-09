@@ -22,7 +22,7 @@ def infer_segmentation(all_texts, model_window_size=2, num_topics=40, passes=10,
                          for sent in doc[start_i:start_i + model_window_size]
                          for tok in sent]
             model_chunks.append(cur_chunk)
-        for start_i in range(0, len(doc), segment_window_size // 2):
+        for start_i in range(0, len(doc), max(1, segment_window_size // 2)):
             cur_chunk = [tok
                          for sent in doc[start_i:start_i + segment_window_size]
                          for tok in sent]
