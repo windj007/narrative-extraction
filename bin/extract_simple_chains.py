@@ -8,7 +8,7 @@ import pandas as pd
 
 from narratex.base import pickle_obj, load_all_docs_lazy, load_yaml
 from narratex.clustering import build_simple_event_vocab, extract_collocations_count, calc_pmi, select_pairs_by_weights, \
-    build_event_vocab_group_by_w2v
+    build_event_vocab_group_by_w2v, get_group2name_by_freq
 from narratex.extraction import get_all_events
 from narratex.logger import setup_logger
 
@@ -21,6 +21,7 @@ def main(args):
 
     logger.info('Collect events')
     all_events, _ = get_all_events(load_all_docs_lazy(args.indir))
+    all_events = all_events[:100]  # TODO: UNCOMMENT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     logger.info(f'Collected {len(all_events)} events')
 
     logger.info('Build vocab')
@@ -30,12 +31,14 @@ def main(args):
     elif config.vocab.kind == 'group_by_word2vec':
         group2event, event2group = build_event_vocab_group_by_w2v(all_events,
                                                                   **config.vocab.kwargs)
+    else:
+        raise ValueError(f'Unsupported config.vocab.kind: "{config.vocab.kind}"')
 
     pickle_obj(group2event, os.path.join(args.outdir, 'group2event.pickle'))
     logger.info(f'Grouped events into {len(group2event)} groups')
 
     logger.info('Print groups to csv')
-    group2name = {gr: ev[0].features.text for gr, ev in group2event.items()}
+    group2name = get_group2name_by_freq(group2event)
     group_freq = pd.Series({group2name[g]: len(evs) for g, evs in group2event.items()})
     group_freq.sort_values(ascending=False, inplace=True)
     group_freq.to_csv(os.path.join(args.outdir, 'all_event_groups.csv'), sep='\t')

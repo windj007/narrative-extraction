@@ -31,8 +31,13 @@ class EmbeddingMatchSimilarity:
         self.gensim_emb = gensim_emb
         self.morph = pymorphy2.MorphAnalyzer()
         self.tag_conv = converters.converter('opencorpora-int', 'ud20')
+        self.tag_cache = {}
+        self.unknown_text_cache = set()
 
     def __call__(self, txt1, txt2):
+        if txt1 in self.unknown_text_cache or txt2 in self.unknown_text_cache:
+            return 0
+
         txt1_tokens = self.prepare_tokens(txt1)
         txt2_tokens = self.prepare_tokens(txt2)
 
@@ -42,7 +47,11 @@ class EmbeddingMatchSimilarity:
         txt1_embs = self.get_embeddings(txt1_tokens)
         txt2_embs = self.get_embeddings(txt2_tokens)
 
-        if txt1_embs is None or txt2_embs is None:
+        if txt1_embs is None:
+            self.unknown_text_cache.add(txt1)
+            return 0
+        if txt2_embs is None:
+            self.unknown_text_cache.add(txt2)
             return 0
 
         sims = txt1_embs @ txt2_embs.T
@@ -55,11 +64,16 @@ class EmbeddingMatchSimilarity:
         return [tok + '_' + self.get_tag(tok) for tok in txt.split(' ')]
 
     def get_tag(self, tok):
+        cached_tag = self.tag_cache.get(tok, None)
+        if cached_tag is not None:
+            return cached_tag
         oc_tag = self.morph.parse(tok)[0].tag.POS
         if oc_tag is None:
             LOGGER.warning(f'Could not find POS-tag for token "{tok}": {oc_tag}')
             return 'NOTAG'
-        return self.tag_conv(oc_tag).split(' ')[0]
+        tag = self.tag_conv(oc_tag).split(' ')[0]
+        cached_tag[tok] = tag
+        return tag
 
     def get_embeddings(self, tokens):
         vectors = [self.gensim_emb[tok] for tok in tokens if tok in self.gensim_emb.vocab]
@@ -74,6 +88,7 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
                                    warning_group_threshold=0.4):
     emb = KeyedVectors.load_word2vec_format(model_path, binary=True)
     measure = EmbeddingMatchSimilarity(emb)
+
     text2group = {}
     event2group = {}
     group_n = 0
@@ -114,7 +129,7 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
         else:
             group2event[grid] = [evid]
 
-    for grid, group_evs in list(group2event):
+    for grid, group_evs in list(group2event.items()):
         if len(group_evs) < min_mentions_per_group:
             del group2event[grid]
             for evid in group_evs:
@@ -174,4 +189,13 @@ def select_pairs_by_weights(pairwise_weights, name_map=None, min_weight=0):
     result = pd.DataFrame(dict(first=first_index, second=second_index, pmi=weights))
     result.sort_values('pmi', ascending=False, inplace=True)
     result.reset_index(inplace=True, drop=True)
+    return result
+
+
+def get_group2name_by_freq(group2event):
+    result = {}
+    for group_id, events in group2event.items():
+        texts_by_freq = collections.Counter(ev.features.text for ev in events)
+        name = ', '.join(t for t, _ in texts_by_freq.most_common())
+        result[group_id] = name
     return result

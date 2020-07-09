@@ -4,6 +4,7 @@ import uuid
 import re
 import toposort
 
+from narratex.base import load_all_docs_lazy
 
 _VERBAL_NOUNS = None
 
