@@ -1,0 +1,10 @@
+vocab:
+  kind: group_by_topics
+  kwargs:
+    window_size: 5
+    num_topics: 20
+    passes: 5
+
+collocations:
+  min_sent_dist: 0
+  max_sent_dist: 1

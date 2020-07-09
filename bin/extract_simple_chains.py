@@ -11,6 +11,7 @@ from narratex.clustering import build_simple_event_vocab, extract_collocations_c
     build_event_vocab_group_by_w2v, get_group2name_by_freq
 from narratex.extraction import get_all_events
 from narratex.logger import setup_logger
+from narratex.segmentation import infer_segmentation
 
 
 def main(args):
@@ -30,6 +31,8 @@ def main(args):
     elif config.vocab.kind == 'group_by_word2vec':
         group2event, event2group = build_event_vocab_group_by_w2v(all_events,
                                                                   **config.vocab.kwargs)
+    elif config.vocab.kind == 'group_by_topics':
+        infer_segmentation(load_all_docs_lazy(args.indir), **config.vocab.kwargs)
     else:
         raise ValueError(f'Unsupported config.vocab.kind: "{config.vocab.kind}"')
 
