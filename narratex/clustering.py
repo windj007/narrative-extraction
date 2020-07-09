@@ -178,10 +178,10 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
                 group2event[group_n] = [event]
                 group_n += 1
 
-    group2event = {grid: events for grid, events in group2event.items() if len(events) >= min_mentions_per_group}
-    group_remap = {grid: i for i, grid in enumerate(sorted(group2event.keys()))}
-    group2event = {group_remap[grid]: events for grid, events in group2event.items()}
-    event2group = {ev.id: grid for grid, events in group2event.items() for ev in events}
+    # group2event = {grid: events for grid, events in group2event.items() if len(events) >= min_mentions_per_group}
+    # group_remap = {grid: i for i, grid in enumerate(sorted(group2event.keys()))}
+    # group2event = {group_remap[grid]: events for grid, events in group2event.items()}
+    # event2group = {ev.id: grid for grid, events in group2event.items() for ev in events}
 
     return group2event, event2group
 
