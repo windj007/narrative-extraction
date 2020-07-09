@@ -52,9 +52,8 @@ def main(args):
                                             for fore_gr1 in range(len(fore_single_proba))])
 
     fore_single_count = pd.Series({fore_group2name[gr]: len(evs) for gr, evs in fore_group2event.items()})
-    back2fore_single_count = pd.Series({fore_group2name[gr]: (len(back_group2event[back_name2group[fore_group2name[gr]]])
-                                                              if fore2back_group_map[gr] is not None
-                                                              else 0)
+    back2fore_single_count = pd.Series({fore_group2name[gr]: sum(len(back_group2event[back_gr])
+                                                                 for back_gr in fore2back_group_map[gr])
                                         for gr in fore_group2event.keys()})
 
     # contrastive reweighting based only on single probability difference
