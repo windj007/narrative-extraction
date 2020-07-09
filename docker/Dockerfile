@@ -10,6 +10,7 @@ RUN pip install deeppavlov git+https://github.com/IINemo/isanlp.git conllu git+h
 RUN python -m deeppavlov install syntax_ru_syntagrus_bert
 RUN python -m deeppavlov install morpho_ru_syntagrus_pymorphy
 RUN pip install pyyaml
+RUN pip install annoy
 
 WORKDIR /workspace
 ENV PYTHONPATH=/workspace

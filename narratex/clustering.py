@@ -6,6 +6,7 @@ import pandas as pd
 import scipy.optimize
 from russian_tagsets import converters
 from gensim.models import KeyedVectors
+import annoy
 
 from narratex.logger import LOGGER
 
@@ -27,26 +28,62 @@ def build_simple_event_vocab(all_events, min_mentions_per_group=10):
 
 
 class EmbeddingMatchSimilarity:
-    def __init__(self, gensim_emb):
+    def __init__(self, gensim_emb, texts, trees_n=10):
         self.gensim_emb = gensim_emb
         self.morph = pymorphy2.MorphAnalyzer()
         self.tag_conv = converters.converter('opencorpora-int', 'ud20')
         self.tag_cache = {}
-        self.unknown_text_cache = set()
-        self.sim_cache = {}
 
-    def __call__(self, txt1, txt2):
-        if txt1 in self.unknown_text_cache or txt2 in self.unknown_text_cache:
-            return 0
+        self.id2text = list(sorted(set(texts)))
 
-        cached_sim = self.sim_cache.get((txt1, txt2), None)
-        if cached_sim is not None:
-            return cached_sim
+        textid2tokens = [[tok + '_' + self.get_tag(tok) for tok in txt]
+                         for txt in self.id2text]
+        tokenid2token = [tok for tok in sorted(set(tok for txt_toks in textid2tokens for tok in txt_toks))
+                         if tok in self.gensim_emb.vocab]
+        token2tokenid = {tok: i for i, tok in enumerate(tokenid2token)}
+        self.tokenid2vec = [self.gensim_emb[tok] for tok in tokenid2token]
 
-        cached_sim = self.sim_cache.get((txt2, txt1), None)
-        if cached_sim is not None:
-            return cached_sim
+        self.tokenid2textid = collections.defaultdict(set)
+        self.text2tokenid = collections.defaultdict(set)
+        for txt_i, txt_toks in enumerate(textid2tokens):
+            txt = self.id2text[txt_i]
+            for tok in txt_toks:
+                tok_id = token2tokenid.get(tok, None)
+                if tok_id is not None:
+                    self.tokenid2textid[tok_id].add(txt_i)
+                    self.text2tokenid[txt].add(tok_id)
 
+        self.vector_idx = annoy.AnnoyIndex(self.gensim_emb.vectors.shape[1], 'angular')
+        for tok_i, tok_vec in enumerate(self.tokenid2vec):
+            self.vector_idx.add_item(tok_i, tok_vec)
+        self.vector_idx.build(trees_n)
+
+    def find_most_similar(self, query_txt, candidates_n=10, min_cand_tok_sim=0.5):
+        query_token_ids = self.text2tokenid[query_txt]
+        if len(query_token_ids) == 0:
+            return []
+
+        candidate_text_ids = set()
+        for tokid in query_token_ids:
+            candidate_text_ids.update(self.tokenid2textid[tokid])
+            tok_sims = self.vector_idx.get_nns_by_item(tokid, candidates_n, include_distances=True)
+            if len(tok_sims[0]) > 0:
+                for other_tokid, tok_sim in zip(tok_sims):
+                    if tok_sim >= min_cand_tok_sim:
+                        candidate_text_ids.update(self.tokenid2textid[other_tokid])
+
+        query_feats = self.stack_and_norm([self.tokenid2vec[tok_id] for tok_id in query_token_ids])
+
+        candidate_texts = [self.id2text[i] for i in candidate_text_ids if self.id2text[i] != query_txt]
+        sims = []
+        for other_txt in candidate_texts:
+            other_feats = self.stack_and_norm([self.tokenid2vec[tok_id] for tok_id in self.text2tokenid[other_txt]])
+            cur_sim = self.calc_sim(query_feats, other_feats)
+            sims.append(cur_sim)
+        result = sorted(zip(candidate_texts, sims), key=lambda p: p[1], reverse=True)
+        return result
+
+    def measure_similarity(self, txt1, txt2):
         txt1_tokens = self.prepare_tokens(txt1)
         txt2_tokens = self.prepare_tokens(txt2)
 
@@ -56,19 +93,14 @@ class EmbeddingMatchSimilarity:
         txt1_embs = self.get_embeddings(txt1_tokens)
         txt2_embs = self.get_embeddings(txt2_tokens)
 
-        if txt1_embs is None:
-            self.unknown_text_cache.add(txt1)
-            return 0
-        if txt2_embs is None:
-            self.unknown_text_cache.add(txt2)
-            return 0
+        return self.calc_sim(txt1_embs, txt2_embs)
 
+    def calc_sim(self, txt1_embs, txt2_embs):
         sims = txt1_embs @ txt2_embs.T
 
         row_ind, col_ind = scipy.optimize.linear_sum_assignment(sims)
         best_sims = sims[row_ind, col_ind]
         sim = best_sims.mean()
-        self.sim_cache[(txt1, txt2)] = sim
         return sim
 
     def prepare_tokens(self, txt):
@@ -91,6 +123,9 @@ class EmbeddingMatchSimilarity:
         vectors = [self.gensim_emb[tok] for tok in tokens if tok in self.gensim_emb.vocab]
         if len(vectors) == 0:
             return None
+        return self.stack_and_norm(vectors)
+
+    def stack_and_norm(self, vectors):
         result = np.stack(vectors, axis=0)
         result /= np.linalg.norm(result, axis=1, keepdims=True)
         return result
@@ -99,7 +134,8 @@ class EmbeddingMatchSimilarity:
 def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_group=10, same_group_threshold=0.6,
                                    warning_group_threshold=0.4):
     emb = KeyedVectors.load_word2vec_format(model_path, binary=True)
-    measure = EmbeddingMatchSimilarity(emb)
+    sim_index = EmbeddingMatchSimilarity(emb,
+                                         (ev.features.text for ev in all_events))
 
     text2group = {}
     event2group = {}
@@ -112,16 +148,16 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
         if cur_txt in text2group:
             event2group[event.id] = text2group[cur_txt]
         else:
-            best_match_txt = None
+            sim_texts = sim_index.find_most_similar(cur_txt,
+                                                    min_cand_tok_sim=warning_group_threshold)
+            LOGGER.info(f'cur_txt {cur_txt}')
+            LOGGER.info(f'found {sim_texts}')
             best_group = None
             best_sim = 0
-
-            for other_txt, other_group_id in text2group.items():
-                cur_sim = measure(cur_txt, other_txt)
-                if cur_sim >= best_sim or best_group is None:
-                    best_sim = cur_sim
-                    best_group = other_group_id
-                    best_match_txt = other_txt
+            for other_txt, best_sim in sim_texts:  # sim_texts are sorted by sim descending
+                best_group = text2group.get(other_txt, None)
+                if best_group is not None:
+                    break
 
             if best_group is not None and best_sim >= same_group_threshold:
                 LOGGER.info(f'Merge "{cur_txt}" and "{best_match_txt}", similarity {best_sim:.2f}')
@@ -142,6 +178,10 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
             del group2event[grid]
             for ev in group_evs:
                 del event2group[ev.id]
+
+    group_remap = {grid: i for i, grid in enumerate(sorted(group2event.keys()))}
+    group2event = {group_remap[grid]: events for grid, events in group2event.items()}
+    event2group = {evid: group_remap[grid] for evid, grid in event2group.items()}
 
     return group2event, event2group
 

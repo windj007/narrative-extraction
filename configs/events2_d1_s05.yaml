@@ -3,8 +3,8 @@ vocab:
   kwargs:
     model_path: /data/models/tayga_upos_skipgram_300_2_2019/model.bin
     min_mentions_per_group: 10
-    same_group_threshold: 0.43
-    warning_group_threshold: 0.35
+    same_group_threshold: 0.5
+    warning_group_threshold: 0.4
 
 collocations:
   min_sent_dist: 0
