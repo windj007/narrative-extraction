@@ -39,8 +39,7 @@ def infer_segmentation(all_texts, model_window_size=2, num_topics=40, passes=10,
     segment_chunk_topics = [topic_model[ch] for ch in segment_chunk_bow]
     segment_chunk_entropy = [calc_topic_entropy(tops) for tops in segment_chunk_topics]
     print('min', min(segment_chunk_entropy), 'max', max(segment_chunk_entropy), np.mean(segment_chunk_entropy))
-    print(segment_chunk_entropy[:100])
-
-
-
-
+    for i in range(100):
+        print(segment_chunk_entropy[i])
+        print(segment_chunks[i])
+        print()
