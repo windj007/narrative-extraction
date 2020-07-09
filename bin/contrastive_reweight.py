@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from narratex.base import load_pickle
-from narratex.clustering import select_pairs_by_weights
+from narratex.clustering import select_pairs_by_weights, get_group2name_by_freq
 
 
 def bin_entropy(p, eps=1e-10):
@@ -34,20 +34,22 @@ def main(args):
     fore_single_proba = np.load(os.path.join(args.foreground, 'single_proba.npy'))
 
     # remap background probabilities to the shape of foreground ones
-    back_name2group = {ev[0].features.text: gr for gr, ev in back_group2event.items()}
-    fore_group2name = {gr: ev[0].features.text for gr, ev in fore_group2event.items()}
-    fore2back_group_map = {fore_gr: back_name2group.get(fore_name, None)
+    back_name2group = {back_subname: gr
+                       for back_name, gr in get_group2name_by_freq(back_group2event).item()
+                       for back_subname in back_name.split(', ')}
+    fore_group2name = get_group2name_by_freq(fore_group2event)
+    fore2back_group_map = {fore_gr: {back_name2group[fore_subname]
+                                     for fore_subname in fore_name.split(', ')
+                                     if fore_subname in back_name2group}
                            for fore_gr, fore_name in fore_group2name.items()}
-    back2fore_mapped_single_proba = np.array([back_single_proba[back_gr] if back_gr is not None else 0
-                                              for fore_gr in range(len(fore_single_proba))
-                                              for back_gr in (fore2back_group_map[fore_gr],)])
-    back2fore_mapped_pair_proba = np.array([[back_pair_proba[back_gr1, back_gr2]
-                                             if back_gr1 is not None and back_gr2 is not None
-                                             else 0
-                                             for fore_gr2 in range(len(fore_single_proba))
-                                             for back_gr2 in (fore2back_group_map[fore_gr2],)]
-                                            for fore_gr1 in range(len(fore_single_proba))
-                                            for back_gr1 in (fore2back_group_map[fore_gr1],)])
+    back2fore_mapped_single_proba = np.array([sum(back_single_proba[back_gr]
+                                                  for back_gr in fore2back_group_map[fore_gr])
+                                              for fore_gr in range(len(fore_single_proba))])
+    back2fore_mapped_pair_proba = np.array([[sum(back_pair_proba[back_gr1, back_gr2]
+                                                 for back_gr1 in fore2back_group_map[fore_gr1]
+                                                 for back_gr2 in fore2back_group_map[fore_gr2])
+                                             for fore_gr2 in range(len(fore_single_proba))]
+                                            for fore_gr1 in range(len(fore_single_proba))])
 
     fore_single_count = pd.Series({fore_group2name[gr]: len(evs) for gr, evs in fore_group2event.items()})
     back2fore_single_count = pd.Series({fore_group2name[gr]: (len(back_group2event[back_name2group[fore_group2name[gr]]])
