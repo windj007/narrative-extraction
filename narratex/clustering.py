@@ -187,10 +187,10 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
 
     LOGGER.info(f'Total number of events in {len(group2event)} groups after clustering'
                 f'is {sum(len(evs) for evs in group2event.values())}')
-    # group2event = {grid: events for grid, events in group2event.items() if len(events) >= min_mentions_per_group}
-    # group_remap = {grid: i for i, grid in enumerate(sorted(group2event.keys()))}
-    # group2event = {group_remap[grid]: events for grid, events in group2event.items()}
-    # event2group = {ev.id: grid for grid, events in group2event.items() for ev in events}
+    group2event = {grid: events for grid, events in group2event.items() if len(events) >= min_mentions_per_group}
+    group_remap = {grid: i for i, grid in enumerate(sorted(group2event.keys()))}
+    group2event = {group_remap[grid]: events for grid, events in group2event.items()}
+    event2group = {ev.id: grid for grid, events in group2event.items() for ev in events}
 
     return group2event, event2group
 
