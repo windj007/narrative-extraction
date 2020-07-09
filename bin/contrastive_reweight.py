@@ -35,7 +35,7 @@ def main(args):
 
     # remap background probabilities to the shape of foreground ones
     back_name2group = {back_subname: gr
-                       for back_name, gr in get_group2name_by_freq(back_group2event).items()
+                       for gr, back_name in get_group2name_by_freq(back_group2event).items()
                        for back_subname in back_name.split(', ')}
     fore_group2name = get_group2name_by_freq(fore_group2event)
     fore2back_group_map = {fore_gr: {back_name2group[fore_subname]
