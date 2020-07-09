@@ -151,7 +151,9 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
         cur_txt = event.features.text
 
         if cur_txt in text2group:
-            event2group[event.id] = text2group[cur_txt]
+            grid = text2group[cur_txt]
+            event2group[event.id] = grid
+            group2event[grid].append(event)
         else:
             sim_texts = sim_index.find_most_similar(cur_txt, max_cand_tok_dist=1 - warning_group_threshold)
 
@@ -176,10 +178,12 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
                     LOGGER.info(f'Did not merge similar "{cur_txt}" and "{best_match_txt}", '
                                 f'but not enough, sim {best_sim:.2f}')
                 cur_group_n = len(group2event)
+                assert cur_group_n not in group2event
                 event2group[event.id] = cur_group_n
                 text2group[cur_txt] = cur_group_n
                 group2event[cur_group_n] = [event]
         assert event2group[event.id] is not None
+        assert event in group2event[event2group[event.id]]
 
     LOGGER.info(f'Total number of events in {len(group2event)} groups after clustering'
                 f'is {sum(len(evs) for evs in group2event.values())}')
