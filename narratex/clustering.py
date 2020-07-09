@@ -33,10 +33,19 @@ class EmbeddingMatchSimilarity:
         self.tag_conv = converters.converter('opencorpora-int', 'ud20')
         self.tag_cache = {}
         self.unknown_text_cache = set()
+        self.sim_cache = {}
 
     def __call__(self, txt1, txt2):
         if txt1 in self.unknown_text_cache or txt2 in self.unknown_text_cache:
             return 0
+
+        cached_sim = self.sim_cache.get((txt1, txt2), None)
+        if cached_sim is not None:
+            return cached_sim
+
+        cached_sim = self.sim_cache.get((txt2, txt1), None)
+        if cached_sim is not None:
+            return cached_sim
 
         txt1_tokens = self.prepare_tokens(txt1)
         txt2_tokens = self.prepare_tokens(txt2)
@@ -58,7 +67,9 @@ class EmbeddingMatchSimilarity:
 
         row_ind, col_ind = scipy.optimize.linear_sum_assignment(sims)
         best_sims = sims[row_ind, col_ind]
-        return best_sims.mean()
+        sim = best_sims.mean()
+        self.sim_cache[(txt1, txt2)] = sim
+        return sim
 
     def prepare_tokens(self, txt):
         return [tok + '_' + self.get_tag(tok) for tok in txt.split(' ')]
@@ -91,6 +102,7 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
 
     text2group = {}
     event2group = {}
+    group2event = {}
     group_n = 0
 
     for event in all_events:
@@ -113,6 +125,7 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
             if best_group is not None and best_sim >= same_group_threshold:
                 LOGGER.info(f'Merge "{cur_txt}" and "{best_match_txt}", similarity {best_sim:.2f}')
                 event2group[event.id] = best_group
+                group2event[best_group].append(event)
                 text2group[cur_txt] = best_group
             else:
                 if best_group is not None and warning_group_threshold <= best_sim < same_group_threshold:
@@ -120,20 +133,14 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
                                 f'but not enough, sim {best_sim:.2f}')
                 event2group[event.id] = group_n
                 text2group[cur_txt] = group_n
+                group2event[group_n] = [event]
                 group_n += 1
-
-    group2event = {}
-    for evid, grid in event2group.items():
-        if grid in group2event:
-            group2event[grid].append(evid)
-        else:
-            group2event[grid] = [evid]
 
     for grid, group_evs in list(group2event.items()):
         if len(group_evs) < min_mentions_per_group:
             del group2event[grid]
-            for evid in group_evs:
-                del event2group[evid]
+            for ev in group_evs:
+                del event2group[ev.id]
 
     return group2event, event2group
 
