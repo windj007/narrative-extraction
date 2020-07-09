@@ -175,9 +175,10 @@ def build_event_vocab_group_by_w2v(all_events, model_path, min_mentions_per_grou
 
     for grid, group_evs in list(group2event.items()):
         if len(group_evs) < min_mentions_per_group:
-            del group2event[grid]
+            print('delete group', grid)
             for ev in group_evs:
                 del event2group[ev.id]
+            del group2event[grid]
 
     group_remap = {grid: i for i, grid in enumerate(sorted(group2event.keys()))}
     group2event = {group_remap[grid]: events for grid, events in group2event.items()}
