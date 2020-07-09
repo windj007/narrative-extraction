@@ -2,7 +2,7 @@ vocab:
   kind: group_by_word2vec
   kwargs:
     model_path: /data/models/tayga_upos_skipgram_300_2_2019/model.bin
-    min_mentions_per_group: 10
+    min_mentions_per_group: 0 #10
     same_group_threshold: 0.43
     warning_group_threshold: 0.35
 
