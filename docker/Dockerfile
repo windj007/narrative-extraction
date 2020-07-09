@@ -11,6 +11,7 @@ RUN python -m deeppavlov install syntax_ru_syntagrus_bert
 RUN python -m deeppavlov install morpho_ru_syntagrus_pymorphy
 RUN pip install pyyaml
 RUN pip install annoy
+RUN pip install yandex-search requests
 
 WORKDIR /workspace
 ENV PYTHONPATH=/workspace
