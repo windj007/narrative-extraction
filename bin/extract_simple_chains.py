@@ -21,7 +21,6 @@ def main(args):
 
     logger.info('Collect events')
     all_events, _ = get_all_events(load_all_docs_lazy(args.indir))
-    all_events = all_events[:100]  # TODO: UNCOMMENT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     logger.info(f'Collected {len(all_events)} events')
 
     logger.info('Build vocab')
