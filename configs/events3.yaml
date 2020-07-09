@@ -1,8 +1,8 @@
 vocab:
   kind: group_by_topics
   kwargs:
-    model_window_size: 1
-    segment_window_size: 10
+    model_window_size: 10
+    segment_window_size: 1
     num_topics: 20
     passes: 5
 
