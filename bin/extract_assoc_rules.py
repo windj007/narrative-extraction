@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import collections
 import os
 
 import numpy as np
@@ -23,10 +23,17 @@ def main(args):
                                          **config.assoc_kwargs)
     pickle_obj(weighted_rules, os.path.join(args.outdir, 'weighted_rules.npy'))
 
-    with open(os.path.join(args.outdir, 'weighted_rules.csv'), 'w') as outf:
-        for weight, itemset in weighted_rules:
-            title = '\t'.join(group2name[gr] for gr in itemset)
-            outf.write(f'{weight:.3f}\t{title}\n')
+    rules_by_size = collections.defaultdict(list)
+    for weight, itemset in weighted_rules:
+        rules_by_size[len(itemset)].append((weight, itemset))
+
+    for rule_size, lst in rules_by_size.items():
+        lst.sort(reverse=True)
+
+        with open(os.path.join(args.outdir, f'weighted_rules_{rule_size:02d}.csv'), 'w') as outf:
+            for weight, itemset in lst:
+                title = '\t'.join(group2name[gr] for gr in itemset)
+                outf.write(f'{weight:.3f}\t{title}\n')
 
 
 if __name__ == '__main__':
