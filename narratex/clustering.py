@@ -8,7 +8,7 @@ import scipy.optimize
 import scipy.sparse
 from gensim.models import KeyedVectors
 from russian_tagsets import converters
-
+import fp_growth
 from narratex.logger import LOGGER
 
 
@@ -262,3 +262,29 @@ def get_group2name_by_freq(group2event):
 def measure_similarity_by_mutual_features(feats):
     feats = feats / (((feats ** 2).sum(1, keepdims=True) ** 0.5) + 1e-3)
     return feats @ feats.T
+
+
+def get_itemset_weight(itemset, single_weights, pairwise_weights):
+    single = np.mean([single_weights[a] for a in itemset])
+    pair = np.mean([pairwise_weights[a, b] for i, a in enumerate(itemset) for b in itemset[i+1:])
+    return single + pair
+
+
+def extract_assoc_rules(docs, single_weights, pairwise_weights, event2group, min_support=5, min_sim=-1, window_sents=10, stride=7):
+    transactions = []
+    for doc_i, doc in enumerate(docs):
+        for start_i in range(0, len(doc), stride):
+            cur_trans = [event2group[event.id]
+                         for sent in doc[start_i:start_i + window_sents]
+                         for event in sent.get('events', [])]
+            transactions.append(cur_trans)
+
+    weighted_itemsets = []
+    for itemset in fp_growth.find_frequent_itemsets(transactions, min_support):
+        weight = get_itemset_weight(itemset, single_weights, pairwise_weights)
+        if weight >= min_sim:
+            weighted_itemsets.append((weight, itemset))
+
+    weighted_itemsets.sort(reverse=True)
+
+    return weighted_itemsets
