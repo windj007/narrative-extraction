@@ -266,7 +266,9 @@ def measure_similarity_by_mutual_features(feats):
 
 def get_itemset_weight(itemset, single_weights, pairwise_weights):
     single = np.mean([single_weights[a] for a in itemset])
-    pair = np.mean([pairwise_weights[a, b] for i, a in enumerate(itemset) for b in itemset[i+1:])
+    pair = np.mean([pairwise_weights[a, b]
+                    for i, a in enumerate(itemset)
+                    for b in itemset[i+1:]])
     return single + pair
 
 
