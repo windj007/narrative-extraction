@@ -12,6 +12,9 @@ def main(args):
     group2name = get_group2name_by_freq(group2event)
     pair_weights = np.load(args.pairwise_weights)
 
+    min_weight = pair_weights[~np.isinf(pair_weights)].min() - 10
+    pair_weights[np.isinf(pair_weights)] = min_weight
+
     dct = make_dendrogram_dict(pair_weights, group2name, method='single')
     save_json(dct, args.outfile)
 
