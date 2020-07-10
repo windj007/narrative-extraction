@@ -16,24 +16,28 @@ def main(args):
     event2group = {ev.id: gr for gr, events in group2event.items() for ev in events}
     group2name = get_group2name_by_freq(group2event)
 
-    pmi = np.load(os.path.join(args.stats_indir, 'pmi.npy'))
     single_proba = np.load(os.path.join(args.stats_indir, 'single_proba.npy'))
 
-    weighted_rules = extract_assoc_rules(load_all_docs_lazy(args.docs_indir), single_proba, pmi, event2group,
-                                         **config.assoc_kwargs)
-    pickle_obj(weighted_rules, os.path.join(args.outdir, 'weighted_rules.npy'))
+    for pair_weight_kind in ('pmi', 'pmi_cosine_sim'):
+        cur_out_dir = os.path.join(args.outdir, pair_weight_kind)
+        os.makedirs(cur_out_dir, exist_ok=True)
 
-    rules_by_size = collections.defaultdict(list)
-    for weight, itemset in weighted_rules:
-        rules_by_size[len(itemset)].append((weight, itemset))
+        pmi = np.load(os.path.join(args.stats_indir, pair_weight_kind + '.npy'))
+        weighted_rules = extract_assoc_rules(load_all_docs_lazy(args.docs_indir), single_proba, pmi, event2group,
+                                             **config.assoc_kwargs)
+        pickle_obj(weighted_rules, os.path.join(cur_out_dir, 'weighted_rules.npy'))
 
-    for rule_size, lst in rules_by_size.items():
-        lst.sort(reverse=True)
+        rules_by_size = collections.defaultdict(list)
+        for weight, itemset in weighted_rules:
+            rules_by_size[len(itemset)].append((weight, itemset))
 
-        with open(os.path.join(args.outdir, f'weighted_rules_{rule_size:02d}.csv'), 'w') as outf:
-            for weight, itemset in lst:
-                title = '\t'.join(f'[{group2name[gr]}]' for gr in itemset)
-                outf.write(f'{weight:.3f}\t{title}\n')
+        for rule_size, lst in rules_by_size.items():
+            lst.sort(reverse=True)
+
+            with open(os.path.join(cur_out_dir, f'weighted_rules_{rule_size:02d}.csv'), 'w') as outf:
+                for weight, itemset in lst:
+                    title = '\t'.join(f'[{group2name[gr]}]' for gr in itemset)
+                    outf.write(f'{weight:.3f}\t{title}\n')
 
 
 if __name__ == '__main__':
