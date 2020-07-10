@@ -260,5 +260,5 @@ def get_group2name_by_freq(group2event):
 
 
 def measure_similarity_by_mutual_features(feats):
-    feats = feats / (feats ** 2).sum(1, keepdims=True)
+    feats = feats / ((feats ** 2).sum(1, keepdims=True) + 1e-3)
     return feats @ feats.T
