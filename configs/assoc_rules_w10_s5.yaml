@@ -1,0 +1,5 @@
+assoc_kwargs:
+  min_support: 5
+  min_sim: -1
+  window_sents: 10
+  stride: 5
