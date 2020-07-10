@@ -18,7 +18,7 @@ def calc_topics_sim(a, b):
     return sum(adict[k] * bdict[k] for k in both_keys) / (anorm * bnorm)
 
 
-def print_topic_model(out_file, model: gensim.models.LdaMulticore, top_words_num=40):
+def print_topic_model(out_file, model: gensim.models.LdaMulticore, top_words_num=100):
     topic_word_probs = model.get_topics()
     word_sum = topic_word_probs.sum(axis=0, keepdims=True)
     contrast_topic_word_weights = topic_word_probs / (word_sum + 1e-3)
