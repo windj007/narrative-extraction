@@ -60,11 +60,11 @@ def infer_segmentation(all_texts, model_window_size=2, num_topics=20, passes=100
     model_chunk_bow = [vocab.doc2bow(ch) for ch in model_chunks]
     segment_chunk_bow = [vocab.doc2bow(ch) for ch in segment_chunks]
 
-    print('vocab.id2token', vocab.id2token[:10])
+    print('vocab.id2token', vocab.id2token)
     topic_model = gensim.models.LdaMulticore(model_chunk_bow,
                                              num_topics=num_topics, passes=passes, id2word=vocab.id2token,
                                              iterations=iterations)
-    print('vocab.id2token', vocab.id2token[:10])
+    print('vocab.id2token', vocab.id2token)
     topic_model.print_topics()
     segment_chunk_topics = [topic_model[ch] for ch in segment_chunk_bow]
     adj_sim = [calc_topics_sim(segment_chunk_topics[i], segment_chunk_topics[i + 1])
