@@ -32,7 +32,7 @@ def main(args):
 
         with open(os.path.join(args.outdir, f'weighted_rules_{rule_size:02d}.csv'), 'w') as outf:
             for weight, itemset in lst:
-                title = '\t'.join(group2name[gr] for gr in itemset)
+                title = '\t'.join(f'[{group2name[gr]}]' for gr in itemset)
                 outf.write(f'{weight:.3f}\t{title}\n')
 
 
