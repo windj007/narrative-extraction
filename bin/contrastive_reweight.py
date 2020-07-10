@@ -26,7 +26,7 @@ def main(args):
     os.makedirs(args.outdir, exist_ok=True)
 
     back_group2event = load_pickle(os.path.join(args.background, 'group2event.pickle'))
-    # back_pair_proba = np.load(os.path.join(args.background, 'pair_proba.npy'))
+    back_pair_proba = np.load(os.path.join(args.background, 'pair_proba.npy'))
     back_single_proba = np.load(os.path.join(args.background, 'single_proba.npy'))
     # back_total_events = sum(len(evs) for evs in back_group2event.values())
 
