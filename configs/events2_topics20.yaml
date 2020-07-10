@@ -4,7 +4,7 @@ vocab:
     model_window_size: 5
     segment_window_size: 5
     num_topics: 20
-    passes: 20
+    passes: 100
 
 collocations:
   min_sent_dist: 0
