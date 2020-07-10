@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from narratex.base import load_pickle
-from narratex.clustering import select_pairs_by_weights, get_group2name_by_freq
+from narratex.clustering import select_pairs_by_weights, get_group2name_by_freq, measure_similarity_by_mutual_features
 
 
 def bin_entropy(p, eps=1e-10):
@@ -79,7 +79,16 @@ def main(args):
         .reset_index(drop=True)
     all_colloc_single_contr['second_background_count'] = back2fore_single_count[all_colloc_single_contr['second']] \
         .reset_index(drop=True)
-    all_colloc_single_contr.to_csv(os.path.join(args.outdir, 'all_colloc.csv'), sep='\t')
+    all_colloc_single_contr.to_csv(os.path.join(args.outdir, 'all_colloc_pmi.csv'), sep='\t')
+
+    mutual_sim = measure_similarity_by_mutual_features(np.clip(pmi_threshold1, 0, None))
+    np.save(os.path.join(args.outdir, 'pmi_cosine_sim.npy'), mutual_sim)
+
+    group_freq = pd.Series({fore_group2name[g]: len(evs) for g, evs in fore_group2event.items()})
+    all_colloc_sim = select_pairs_by_weights(mutual_sim, name_map=fore_group2name)
+    all_colloc_sim['first_count'] = group_freq[all_colloc_sim['first']].reset_index(drop=True)
+    all_colloc_sim['second_count'] = group_freq[all_colloc_sim['second']].reset_index(drop=True)
+    all_colloc_sim.to_csv(os.path.join(args.outdir, 'all_colloc_via_pmi_sim.csv'), sep='\t')
 
     # contrastive reweighting based on single and pairwise probability difference
     # pmi_pair_contr = pmi_single_contr - np.log(back2fore_mapped_pair_proba + LOG_EPS)
