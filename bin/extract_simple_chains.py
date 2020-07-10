@@ -67,7 +67,7 @@ def main(args):
     all_colloc.to_csv(os.path.join(args.outdir, 'all_colloc_pmi.csv'), sep='\t')
 
     logger.info('Find collocations via joint PMI features')
-    mutual_sim = measure_similarity_by_mutual_features(pmi)
+    mutual_sim = measure_similarity_by_mutual_features(np.clip(pmi, 0, None))
     np.save(os.path.join(args.outdir, 'pmi_cosine_sim.npy'), mutual_sim)
 
     all_colloc_sim = select_pairs_by_weights(mutual_sim, name_map=group2name)
