@@ -190,6 +190,7 @@ def plot_event_graph(group_similarity, group2name, min_sim=0, figsize=(20, 20),
 def make_dendrogram_dict(pairwise_weights, group2name, method='single'):
     pdist = ssd.squareform(pairwise_weights)
     z = sch.linkage(pdist, method=method, optimal_ordering=True)
+    print(z[:10])
     cluster_id2dict = [dict(name=group2name[i]) for i in range(len(group2name))]
     for merge_i, (clust1, clust2, dist, size) in enumerate(z):
         child1, child2 = cluster_id2dict[clust1], cluster_id2dict[clust2]
