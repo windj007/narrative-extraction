@@ -18,15 +18,15 @@ def calc_topics_sim(a, b):
     return sum(adict[k] * bdict[k] for k in both_keys) / (anorm * bnorm)
 
 
-def print_topic_model(out_file, model: gensim.models.LdaMulticore, vocab: gensim.corpora.dictionary.Dictionary,
-                      top_words_num=40):
+def print_topic_model(out_file, model: gensim.models.LdaMulticore, top_words_num=40):
     topic_word_probs = model.get_topics()
     word_sum = topic_word_probs.sum(axis=0, keepdims=True)
     contrast_topic_word_weights = topic_word_probs / (word_sum + 1e-3)
+    id2word = [model.id2word[i] for i in range(len(model.id2word))]
     with open(out_file, 'w') as outf:
         for topic_i in range(contrast_topic_word_weights.shape[0]):
             cur_weights = contrast_topic_word_weights[topic_i]
-            words_with_weights = list(zip(vocab.id2token, cur_weights))
+            words_with_weights = list(zip(id2word, cur_weights))
             words_with_weights.sort(key=lambda p: p[1], reverse=True)
             words_with_weights = words_with_weights[:top_words_num]
 
@@ -60,12 +60,9 @@ def infer_segmentation(all_texts, model_window_size=2, num_topics=20, passes=100
     model_chunk_bow = [vocab.doc2bow(ch) for ch in model_chunks]
     segment_chunk_bow = [vocab.doc2bow(ch) for ch in segment_chunks]
 
-    print('vocab.id2token', vocab.id2token)
     topic_model = gensim.models.LdaMulticore(model_chunk_bow,
                                              num_topics=num_topics, passes=passes, id2word=vocab.id2token,
                                              iterations=iterations)
-    print('vocab.id2token', vocab.id2token)
-    topic_model.print_topics()
     segment_chunk_topics = [topic_model[ch] for ch in segment_chunk_bow]
     adj_sim = [calc_topics_sim(segment_chunk_topics[i], segment_chunk_topics[i + 1])
                for i in range(len(segment_chunk_topics) - 1)]
@@ -77,4 +74,4 @@ def infer_segmentation(all_texts, model_window_size=2, num_topics=20, passes=100
     #     print(segment_chunks[i])
     #     print(adj_sim[i])
     #     print()
-    return topic_model, vocab
+    return topic_model
