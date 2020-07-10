@@ -19,6 +19,11 @@ def main(args):
     # ensure symmetric
     pair_weights = (pair_weights + pair_weights.T) / 2
 
+    # we need distance, not similarity
+    pair_weights = pair_weights.max() - pair_weights
+    pair_weights[np.arange(pair_weights.shape[0]), np.arange(pair_weights.shape[0])] = 0
+    print('\n'.join(' '.join(f'{v:.3f}' for v in row) for row in pair_weights[:10, :10]))
+
     dct = make_dendrogram_dict(pair_weights, group2name, method='single')
     save_json(dct, args.outfile)
 
