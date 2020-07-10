@@ -12,7 +12,6 @@ RUN python -m deeppavlov install morpho_ru_syntagrus_pymorphy
 RUN pip install pyyaml
 RUN pip install annoy
 RUN pip install yandex-search requests
-RUN pip install git+https://github.com/enaeseth/python-fp-growth
 
 WORKDIR /workspace
 ENV PYTHONPATH=/workspace

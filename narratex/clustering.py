@@ -8,7 +8,7 @@ import scipy.optimize
 import scipy.sparse
 from gensim.models import KeyedVectors
 from russian_tagsets import converters
-import fp_growth
+from narratex.fp_growth import find_frequent_itemsets
 from narratex.logger import LOGGER
 
 
@@ -282,7 +282,7 @@ def extract_assoc_rules(docs, single_weights, pairwise_weights, event2group, min
             transactions.append(cur_trans)
 
     weighted_itemsets = []
-    for itemset in fp_growth.find_frequent_itemsets(transactions, min_support):
+    for itemset in find_frequent_itemsets(transactions, min_support):
         weight = get_itemset_weight(itemset, single_weights, pairwise_weights)
         if weight >= min_sim:
             weighted_itemsets.append((weight, itemset))
