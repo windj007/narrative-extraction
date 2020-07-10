@@ -102,4 +102,4 @@ def load_yaml(fname):
 
 def save_json(obj, fname):
     with open(fname, 'w') as f:
-        json.dump(obj, f, indent=4)
+        f.write('var data = ' + json.dumps(obj, indent=4, ensure_ascii=False))
