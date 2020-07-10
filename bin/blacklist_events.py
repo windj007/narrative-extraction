@@ -6,8 +6,6 @@ import re
 
 import pandas as pd
 
-BLACKLIST_FILE = os.path.join(os.path.dirname(__file__), '..', 'narratex', 'data', 'events_blacklist.txt')
-
 
 def main(args):
     os.makedirs(os.path.dirname(args.outpath), exist_ok=True)

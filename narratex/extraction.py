@@ -116,3 +116,14 @@ def get_all_events(docs):
                 result.append(event)
                 event2doc_sent[event.id] = (doc_i, sent_i)
     return result, event2doc_sent
+
+
+BLACKLIST_FILE = os.path.join(os.path.dirname(__file__), 'data', 'events_blacklist.txt')
+
+
+def blacklist_events(events):
+    with open(BLACKLIST_FILE, 'r') as f:
+        blacklist_patterns = [re.compile(line.strip(), re.I) for line in f if line.strip()]
+    return [ev for ev in events
+            if not any(pattern.search(ev.features.text)
+                       for pattern in blacklist_patterns)]

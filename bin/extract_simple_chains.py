@@ -9,7 +9,7 @@ import pandas as pd
 from narratex.base import pickle_obj, load_all_docs_lazy, load_yaml
 from narratex.clustering import build_simple_event_vocab, extract_collocations_count, calc_pmi, select_pairs_by_weights, \
     build_event_vocab_group_by_w2v, get_group2name_by_freq, measure_similarity_by_mutual_features
-from narratex.extraction import get_all_events
+from narratex.extraction import get_all_events, blacklist_events
 from narratex.logger import setup_logger
 from narratex.segmentation import infer_segmentation, print_topic_model
 
@@ -22,6 +22,7 @@ def main(args):
 
     logger.info('Collect events')
     all_events, _ = get_all_events(load_all_docs_lazy(args.indir))
+    all_events = blacklist_events(all_events)
     logger.info(f'Collected {len(all_events)} events')
 
     logger.info('Build vocab')
