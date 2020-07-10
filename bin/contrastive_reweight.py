@@ -81,7 +81,7 @@ def main(args):
         .reset_index(drop=True)
     all_colloc_single_contr.to_csv(os.path.join(args.outdir, 'all_colloc_pmi.csv'), sep='\t')
 
-    mutual_sim = measure_similarity_by_mutual_features(np.clip(pmi_threshold1, 0, None))
+    mutual_sim = measure_similarity_by_mutual_features(np.clip(pmi_single_contr, 0, None))
     np.save(os.path.join(args.outdir, 'pmi_cosine_sim.npy'), mutual_sim)
 
     group_freq = pd.Series({fore_group2name[g]: len(evs) for g, evs in fore_group2event.items()})
