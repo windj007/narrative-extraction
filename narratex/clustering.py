@@ -278,7 +278,8 @@ def extract_assoc_rules(docs, single_weights, pairwise_weights, event2group, min
         for start_i in range(0, len(doc), stride):
             cur_trans = [event2group[event.id]
                          for sent in doc[start_i:start_i + window_sents]
-                         for event in sent.get('events', [])]
+                         for event in sent.get('events', [])
+                         if event.id in event2group]
             transactions.append(cur_trans)
 
     weighted_itemsets = []
