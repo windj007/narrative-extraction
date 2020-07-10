@@ -18,7 +18,23 @@ def calc_topics_sim(a, b):
     return sum(adict[k] * bdict[k] for k in both_keys) / (anorm * bnorm)
 
 
-def infer_segmentation(all_texts, model_window_size=2, num_topics=40, passes=10, segment_window_size=5):
+def print_topic_model(out_file, model: gensim.models.LdaMulticore, top_words_num=40):
+    topic_word_probs = model.get_topics()
+    word_sum = topic_word_probs.sum(axis=0, keepdims=True)
+    contrast_topic_word_weights = topic_word_probs / (word_sum + 1e-3)
+    with open(out_file, 'w') as outf:
+        for topic_i in range(contrast_topic_word_weights.shape[0]):
+            cur_weights = contrast_topic_word_weights[topic_i]
+            words_with_weights = list(zip(model.id2word, cur_weights))
+            words_with_weights.sort(key=lambda p: p[1], reverse=True)
+            words_with_weights = words_with_weights[:top_words_num]
+
+            outf.write(f'Topic {topic_i}\n')
+            outf.write(' '.join(f'"{word}":{weight:.3f}' for word, weight in words_with_weights))
+            outf.write('\n\n')
+
+
+def infer_segmentation(all_texts, model_window_size=2, num_topics=20, passes=20, iterations=100, segment_window_size=5):
     all_texts_with_tokens = [[[tok.lemma.lower() for tok in sent.joint
                                if tok.upos in GOOD_POS]
                               for sent in doc]
@@ -44,7 +60,8 @@ def infer_segmentation(all_texts, model_window_size=2, num_topics=40, passes=10,
     segment_chunk_bow = [vocab.doc2bow(ch) for ch in segment_chunks]
 
     topic_model = gensim.models.LdaMulticore(model_chunk_bow,
-                                             num_topics=num_topics, passes=passes, id2word=vocab.id2token)
+                                             num_topics=num_topics, passes=passes, id2word=vocab.id2token,
+                                             iterations=iterations)
 
     segment_chunk_topics = [topic_model[ch] for ch in segment_chunk_bow]
     adj_sim = [calc_topics_sim(segment_chunk_topics[i], segment_chunk_topics[i + 1])
@@ -52,8 +69,9 @@ def infer_segmentation(all_texts, model_window_size=2, num_topics=40, passes=10,
 
     # segment_chunk_entropy = [calc_topic_entropy(tops) for tops in segment_chunk_topics]
     # print('min', min(segment_chunk_entropy), 'max', max(segment_chunk_entropy), np.mean(segment_chunk_entropy))
-    print('min', min(adj_sim), 'max', max(adj_sim), 'mean', np.mean(adj_sim))
-    for i in range(100):
-        print(segment_chunks[i])
-        print(adj_sim[i])
-        print()
+    # print('min', min(adj_sim), 'max', max(adj_sim), 'mean', np.mean(adj_sim))
+    # for i in range(100):
+    #     print(segment_chunks[i])
+    #     print(adj_sim[i])
+    #     print()
+    return topic_model
