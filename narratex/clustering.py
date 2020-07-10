@@ -1,12 +1,13 @@
 import collections
-import numpy as np
-import pymorphy2
-import scipy.sparse
-import pandas as pd
-import scipy.optimize
-from russian_tagsets import converters
-from gensim.models import KeyedVectors
+
 import annoy
+import numpy as np
+import pandas as pd
+import pymorphy2
+import scipy.optimize
+import scipy.sparse
+from gensim.models import KeyedVectors
+from russian_tagsets import converters
 
 from narratex.logger import LOGGER
 
@@ -256,3 +257,8 @@ def get_group2name_by_freq(group2event):
         name = ', '.join(t for t, _ in texts_by_freq.most_common())
         result[group_id] = name
     return result
+
+
+def measure_similarity_by_mutual_features(feats):
+    feats = feats / (feats ** 2).sum(1, keepdims=True)
+    return feats @ feats.T

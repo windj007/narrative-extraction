@@ -6,6 +6,13 @@ import networkx as nx
 from IPython.display import display as jupyter_display
 import matplotlib.pyplot as plt
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+import scipy.spatial.distance as ssd
+import scipy.cluster.hierarchy as sch
+
 
 DETOKENIZE_RULES = (
     (r' ([.,!?;:»%)\]\'])( ?)', r'\1\2'),
@@ -182,3 +189,10 @@ def plot_event_graph(group_similarity, group2name, min_sim=0, figsize=(20, 20),
         fig.savefig(fname)
 
     return fig
+
+
+# def make_dendrogram(group2name, pairwise_weights, method='single', trunc_level=30):
+#     pdist = ssd.squareform(pairwise_weights)
+#     z = sch.linkage(pdist, method=method, optimal_ordering=True)
+#     fig, ax = plt.subplots()
+#     sch.dendrogram(z, trunc_level, ax=ax)

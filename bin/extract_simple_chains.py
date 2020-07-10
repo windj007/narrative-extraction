@@ -8,7 +8,7 @@ import pandas as pd
 
 from narratex.base import pickle_obj, load_all_docs_lazy, load_yaml
 from narratex.clustering import build_simple_event_vocab, extract_collocations_count, calc_pmi, select_pairs_by_weights, \
-    build_event_vocab_group_by_w2v, get_group2name_by_freq
+    build_event_vocab_group_by_w2v, get_group2name_by_freq, measure_similarity_by_mutual_features
 from narratex.extraction import get_all_events
 from narratex.logger import setup_logger
 from narratex.segmentation import infer_segmentation, print_topic_model
@@ -64,7 +64,16 @@ def main(args):
     all_colloc = select_pairs_by_weights(pmi, name_map=group2name)
     all_colloc['first_count'] = group_freq[all_colloc['first']].reset_index(drop=True)
     all_colloc['second_count'] = group_freq[all_colloc['second']].reset_index(drop=True)
-    all_colloc.to_csv(os.path.join(args.outdir, 'all_colloc.csv'), sep='\t')
+    all_colloc.to_csv(os.path.join(args.outdir, 'all_colloc_pmi.csv'), sep='\t')
+
+    logger.info('Find collocations via joint PMI features')
+    mutual_sim = measure_similarity_by_mutual_features(pmi)
+    np.save(os.path.join(args.outdir, 'pmi_cosine_sim.npy'), mutual_sim)
+
+    all_colloc_sim = select_pairs_by_weights(mutual_sim, name_map=group2name)
+    all_colloc_sim['first_count'] = group_freq[all_colloc_sim['first']].reset_index(drop=True)
+    all_colloc_sim['second_count'] = group_freq[all_colloc_sim['second']].reset_index(drop=True)
+    all_colloc_sim.to_csv(os.path.join(args.outdir, 'all_colloc_via_pmi_sim.csv'), sep='\t')
 
 
 if __name__ == '__main__':
