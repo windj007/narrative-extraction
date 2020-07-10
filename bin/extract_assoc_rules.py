@@ -18,11 +18,15 @@ def main(args):
 
     single_proba = np.load(os.path.join(args.stats_indir, 'single_proba.npy'))
 
-    for pair_weight_kind in ('pmi', 'pmi_cosine_sim'):
+    for pair_weight_kind in ('pmi', 'pmi_cosine_sim', 'pmi_pair_contrast', 'pmi_cosine_sim_pair_contr'):
+        pmi_fname = os.path.join(args.stats_indir, pair_weight_kind + '.npy')
+        if not os.path.exists(pmi_fname):
+            continue
+
         cur_out_dir = os.path.join(args.outdir, pair_weight_kind)
         os.makedirs(cur_out_dir, exist_ok=True)
 
-        pmi = np.load(os.path.join(args.stats_indir, pair_weight_kind + '.npy'))
+        pmi = np.load(pmi_fname)
         weighted_rules = extract_assoc_rules(load_all_docs_lazy(args.docs_indir), single_proba, pmi, event2group,
                                              **config.assoc_kwargs)
         pickle_obj(weighted_rules, os.path.join(cur_out_dir, 'weighted_rules.npy'))
