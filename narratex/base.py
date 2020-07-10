@@ -3,6 +3,7 @@ import glob
 import os
 import pickle
 import re
+import json
 
 import conllu
 import yaml
@@ -97,3 +98,8 @@ def load_pickle(fname):
 def load_yaml(fname):
     with open(fname, 'r') as f:
         return edict(yaml.safe_load(f))
+
+
+def save_json(obj, fname):
+    with open(fname, 'w') as f:
+        json.dump(obj, f, indent=4)

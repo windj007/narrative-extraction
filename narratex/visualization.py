@@ -6,10 +6,6 @@ import networkx as nx
 from IPython.display import display as jupyter_display
 import matplotlib.pyplot as plt
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-
 import scipy.spatial.distance as ssd
 import scipy.cluster.hierarchy as sch
 
@@ -191,8 +187,18 @@ def plot_event_graph(group_similarity, group2name, min_sim=0, figsize=(20, 20),
     return fig
 
 
-# def make_dendrogram(group2name, pairwise_weights, method='single', trunc_level=30):
-#     pdist = ssd.squareform(pairwise_weights)
-#     z = sch.linkage(pdist, method=method, optimal_ordering=True)
-#     fig, ax = plt.subplots()
-#     sch.dendrogram(z, trunc_level, ax=ax)
+def make_dendrogram_dict(pairwise_weights, group2name, method='single'):
+    pdist = ssd.squareform(pairwise_weights)
+    z = sch.linkage(pdist, method=method, optimal_ordering=True)
+    cluster_id2dict = [dict(name=group2name[i]) for i in range(len(group2name))]
+    for merge_i, (clust1, clust2, dist, size) in enumerate(z):
+        child1, child2 = cluster_id2dict[clust1], cluster_id2dict[clust2]
+        name1, name2 = child1['name'], child2['name']
+        subname1 = name1.split(', ')[0] if clust1 < len(pairwise_weights) else name1
+        subname2 = name2.split(', ')[0] if clust2 < len(pairwise_weights) else name2
+
+        name = f'[{subname1}] [{subname2}]'
+
+        cluster_id2dict.append(dict(name=name, children=[child1, child2]))
+
+    return cluster_id2dict[-1]
