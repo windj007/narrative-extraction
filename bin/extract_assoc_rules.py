@@ -10,7 +10,7 @@ from narratex.clustering import extract_assoc_rules, get_group2name_by_freq
 
 def main(args):
     config = load_yaml(args.config)
-    os.makedirs(args.outdir)
+    os.makedirs(args.outdir, exist_ok=True)
 
     group2event = load_pickle(os.path.join(args.stats_indir, 'group2event.pickle'))
     event2group = {ev.id: gr for gr, events in group2event.items() for ev in events}
