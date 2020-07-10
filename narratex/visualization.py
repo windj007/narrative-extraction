@@ -199,7 +199,7 @@ def make_dendrogram_dict(pairwise_weights, group2name, method='single'):
         subname1 = name1.split(', ')[0] if clust1 < len(pairwise_weights) else name1
         subname2 = name2.split(', ')[0] if clust2 < len(pairwise_weights) else name2
 
-        name = f'[{subname1}] [{subname2}]'
+        name = f'{subname1}+{subname2}'
 
         cluster_id2dict.append(dict(name=name, children=[child1, child2]))
 
