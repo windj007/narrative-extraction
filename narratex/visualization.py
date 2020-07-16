@@ -1,3 +1,5 @@
+import collections
+import random
 import re
 
 import brave
@@ -90,7 +92,7 @@ def mark_subtree(token_spans, token_ids, entity_id_prefix, entity_type, relation
     return entities, relations
 
 
-def joint_markup_to_brat(sent, syntax=True, events=True):
+def joint_markup_to_brat(sent, syntax=True, events=True, highlight_token_ids=None):
     text, token_spans = detokenize_sentence([t.form for t in sent.joint])
     entities = []
     attributes = []
@@ -98,6 +100,11 @@ def joint_markup_to_brat(sent, syntax=True, events=True):
         entities.append((f'token_{tok.id}',
                          tok.upostag,
                          [token_spans[tok.id - 1]]))
+    if highlight_token_ids:
+        for tok_id in set(highlight_token_ids):
+            entities.append((f'highlight_{tok_id}',
+                             'highlight',
+                             [token_spans[tok_id - 1]]))
     relations = []
     if syntax:
         for tok in sent.joint:
@@ -126,7 +133,10 @@ DEFAULT_BRAVE_MARKUP_DEFINITION = dict(
     entity_types=[
         dict(type='act',
              bgColor='#df5d07',
-             borderColor='darken')
+             borderColor='darken'),
+        dict(type='highlight',
+             bgColor='#d9c702',
+             borderColor='darken'),
     ]
 )
 
@@ -137,14 +147,19 @@ def brave_visualize_sent(sent, **kwargs):
 
 
 class SentenceVis:
-    def __init__(self, name2group, group2event, event2ds, docs, display=True):
+    def __init__(self, docs, name2group=None, group2event=None, event2ds=None, display=True):
         self.name2group = name2group
         self.group2event = group2event
         self.event2ds = event2ds
         self.docs = docs
         self.display = display
+        self.token2ds = collections.defaultdict(set)
+        for doc_i, doc in enumerate(docs):
+            for sent_i, sent in enumerate(doc):
+                for tok in sent.joint:
+                    self.token2ds[tok.lemma].add((doc_i, sent_i))
 
-    def __call__(self, group_name, show_n=5, **kwargs):
+    def get_by_group(self, group_name, show_n=5, **kwargs):
         events = self.group2event[self.name2group[group_name]]
         result = []
         for ev in events[:show_n]:
@@ -154,6 +169,41 @@ class SentenceVis:
             if self.display:
                 jupyter_display(widget)
         return result
+
+    def get_by_tokens(self, tokens, show_n=5, shuffle=False, limit_by_doc=None, **kwargs):
+        ds = None
+        for tok in tokens:
+            if ds is None:
+                ds = self.token2ds[tok]
+            else:
+                ds = ds & self.token2ds[tok]
+        if limit_by_doc is not None:
+            ds = {(d, s) for d, s in ds if d == limit_by_doc}
+        all_ds = sorted(ds)
+        if self.display:
+            jupyter_display(f'Найдено {len(all_ds)} предложений в {len({d for d, _ in all_ds})} разных документах')
+
+        ds = all_ds
+        if shuffle:
+            random.shuffle(ds)
+
+        ds = ds[:show_n]
+        for doc_i, sent_i in ds:
+            sent = self.docs[doc_i][sent_i]
+            highlight_token_ids = [tok.id for tok in sent.joint if tok.lemma in tokens]
+            widget = brave_visualize_sent(sent, highlight_token_ids=highlight_token_ids, **kwargs)
+            if self.display:
+                jupyter_display((doc_i, sent_i))
+                jupyter_display(widget)
+        return all_ds
+
+    def show_sent_neighborhood(self, doc_i, sent_i, width=3, **kwargs):
+        doc = self.docs[doc_i]
+        for other_sent_i in range(max(0, sent_i - width), min(len(doc), sent_i + width)):
+            widget = brave_visualize_sent(doc[other_sent_i], **kwargs)
+            if self.display:
+                jupyter_display((doc_i, sent_i))
+                jupyter_display(widget)
 
 
 def plot_event_graph(group_similarity, group2name, min_sim=0, figsize=(20, 20),
